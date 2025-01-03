@@ -123,7 +123,7 @@ namespace PcapDotNet.Packets.Test
                                 break;
 
                             default:
-                                Assert.Fail(igmpLayer.QueryVersion.ToString());
+                                Assert.False(true, igmpLayer.QueryVersion.ToString());
                                 break;
                         }
                         break;
@@ -142,7 +142,7 @@ namespace PcapDotNet.Packets.Test
                         break;
 
                     default:
-                        Assert.Fail(igmpLayer.MessageTypeValue.ToString());
+                        Assert.False(true, igmpLayer.MessageTypeValue.ToString());
                         break;
                 }
                 foreach (IgmpGroupRecordDatagram groupRecord in packet.Ethernet.Ip.Igmp.GroupRecords)

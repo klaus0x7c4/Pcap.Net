@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using PcapDotNet.Base;
 using PcapDotNet.Packets.Arp;

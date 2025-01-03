@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using PcapDotNet.Core.Native;
@@ -11,8 +11,9 @@ namespace PcapDotNet.Core
         {
             return Interop.Pcap.pcap_geterr(pcapDescriptor);
         }
-
+#if NETCOREAPP1_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static void ThrowInvalidOperation(string errorMessage, PcapHandle /*pcap_t*/ pcapDescriptor)
         {
             var fullError = new StringBuilder(errorMessage);

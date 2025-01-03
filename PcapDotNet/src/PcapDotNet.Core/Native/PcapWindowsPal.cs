@@ -1,8 +1,11 @@
 using System;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
+using Microsoft.Win32.SafeHandles;
+using PcapDotNet.Base;
 using PcapDotNet.Packets;
 using static PcapDotNet.Core.Native.PcapUnmanagedStructures;
 
@@ -10,6 +13,8 @@ namespace PcapDotNet.Core.Native
 {
     internal class PcapWindowsPal : IPcapPal
     {
+        private bool _breakloop;
+
         public PcapWindowsPal()
         {
             PcapHeaderSize = Marshal.SizeOf(typeof(pcap_pkthdr_windows));
@@ -34,11 +39,35 @@ namespace PcapDotNet.Core.Native
             catch (TypeLoadException)
             {
                 // pcap_init not supported, using old Libpcap
+                try
+                {
+                    var result = SafeNativeMethods.wsockinit(); // see https://man7.org/linux/man-pages/man3/pcap_init.3pcap.html Programs that don't call pcap_init() should, on Windows, call pcap_wsockinit() ..
+                    if (result != 0)
+                    {
+                        throw new InvalidOperationException("Could not initialize Windows Sockets.");
+                    }
+                }
+                catch (TypeLoadException)
+                {
+                    try
+                    {
+                        var result = SafeNativeMethods.pcap_wsockinit(); // see https://man7.org/linux/man-pages/man3/pcap_init.3pcap.html Programs that don't call pcap_init() should, on Windows, call pcap_wsockinit() ..
+                        if (result != 0)
+                        {
+                            throw new InvalidOperationException("Could not initialize Windows Sockets.");
+                        }
+                    }
+                    catch (TypeLoadException)
+                    {
+                        // no wpcap.dll present
+                    }
+                }
             }
-            // Needed especially in .NET Core, to make sure codepage 0 returns the system default non-unicode code page
-            //ToDo: Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+#if NETCOREAPP2_0_OR_GREATER
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+#endif
             // In windows by default, system code page is used
-            return Encoding.GetEncoding(0);
+            return Encoding.GetEncoding((int)SafeNativeMethods.GetOEMCP());
         }
 
         public Encoding StringEncoding { get; }
@@ -81,6 +110,10 @@ namespace PcapDotNet.Core.Native
             }
             return handle;
         }
+        public NetworkInterface[] GetAllNetworkInterfacesByDotNet()
+        {
+            return NetworkInterface.GetAllNetworkInterfaces();
+        }
 
         public PacketTotalStatistics GetTotalStatistics(PcapHandle pcapDescriptor)
         {
@@ -99,6 +132,7 @@ namespace PcapDotNet.Core.Native
 
         public int pcap_breakloop(PcapHandle p)
         {
+            _breakloop = true;
             return SafeNativeMethods.pcap_breakloop(p);
         }
 
@@ -144,9 +178,12 @@ namespace PcapDotNet.Core.Native
             return SafeNativeMethods.pcap_datalink_val_to_name(dlt);
         }
 
-        public int pcap_dispatch(PcapHandle adaptHandle, int count, pcap_handler callback, IntPtr ptr)
+        public int pcap_dispatch(PcapHandle adaptHandle, int count, pcap_handler callback, IntPtr ptr, out bool breakloop)
         {
-            return SafeNativeMethods.pcap_dispatch(adaptHandle, count, callback, ptr);
+            var result = SafeNativeMethods.pcap_dispatch(adaptHandle, count, callback, ptr);
+            breakloop = _breakloop;
+            _breakloop = false;
+            return result;
         }
 
         public void pcap_dump(IntPtr user, IntPtr h, IntPtr sp)
@@ -232,7 +269,9 @@ namespace PcapDotNet.Core.Native
 
         public int pcap_next_ex(PcapHandle adaptHandle, ref IntPtr header, ref IntPtr data)
         {
-            return SafeNativeMethods.pcap_next_ex(adaptHandle, ref header, ref data);
+            var result =  SafeNativeMethods.pcap_next_ex(adaptHandle, ref header, ref data);
+            _breakloop = false;
+            return result;
         }
 
         public int pcap_offline_filter(IntPtr prog, IntPtr header, IntPtr pkt_data)
@@ -254,9 +293,33 @@ namespace PcapDotNet.Core.Native
 
         public PcapHandle pcap_open_offline(string fname, out string errbuf)
         {
-            var result = SafeNativeMethods.pcap_open_offline(fname, out var errorBuffer);
-            errbuf = errorBuffer.ToString();
-            return result;
+            errbuf = "";
+            PcapHandle handle;
+            if (fname.AreAllCharactersInRange((char)0, (char)255))
+            {
+                handle = SafeNativeMethods.pcap_open_offline(fname, out var errorBuffer);
+                errbuf = errorBuffer.ToString();
+            }
+            else
+            {
+                try
+                {
+                    var file = File.OpenRead(fname);
+                    handle = SafeNativeMethods.pcap_hopen_offline(file.SafeFileHandle, out var errorBuffer);
+                    errbuf = errorBuffer.ToString();
+
+                    if (handle.IsInvalid)
+                    {
+                        file.Close();
+                    }
+                }
+                catch (FileNotFoundException)
+                {
+                    handle = new PcapHandle();
+                }
+            }
+
+            return handle;
         }
 
         public int pcap_sendpacket(PcapHandle adaptHandle, IntPtr data, int size)
@@ -328,7 +391,9 @@ namespace PcapDotNet.Core.Native
 
         public int pcap_loop(PcapHandle adaptHandle, int count, pcap_handler callback, IntPtr ptr)
         {
-            return SafeNativeMethods.pcap_loop(adaptHandle, count, callback, ptr);
+            var result = SafeNativeMethods.pcap_loop(adaptHandle, count, callback, ptr);
+            _breakloop = false;
+            return result;
         }
 
         public int pcap_is_swapped(PcapHandle adapter)
@@ -383,10 +448,19 @@ namespace PcapDotNet.Core.Native
             [return: MarshalAs(UnmanagedType.Bool)]
             static extern bool SetDllDirectory(string lpPathName);
 
+            [DllImport("kernel32.dll")]
+            internal static extern uint GetOEMCP();
+
             static SafeNativeMethods()
             {
                 SetDllDirectory(Path.Combine(Environment.SystemDirectory, "Npcap"));
             }
+
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
+            internal extern static int wsockinit();
+
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
+            internal extern static int pcap_wsockinit(); // name in older npcap versions
 
             [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
             internal static extern int pcap_init(uint opts, out PcapErrorBuffer /* char* */ errbuf);
@@ -416,6 +490,12 @@ namespace PcapDotNet.Core.Native
                 int flags,
                 int read_timeout,
                 ref pcap_rmtauth rmtauth,
+                out PcapErrorBuffer /* char* */ errbuf);
+
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+            [SuppressUnmanagedCodeSecurity]
+            internal static extern PcapHandle /* pcap_t* */ pcap_hopen_offline(
+                SafeFileHandle/* FILE* */ fp,
                 out PcapErrorBuffer /* char* */ errbuf);
 
             [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]

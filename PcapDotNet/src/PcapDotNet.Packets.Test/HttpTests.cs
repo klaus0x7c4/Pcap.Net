@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -71,7 +71,7 @@ namespace PcapDotNet.Packets.Test
                     HttpResponseLayer httpResponseLayer = (HttpResponseLayer)httpLayer;
                     HttpResponseDatagram httpResponseDatagram = (HttpResponseDatagram)httpDatagram;
                     Assert.Equal(httpResponseLayer.StatusCode, httpResponseDatagram.StatusCode);
-                    Assert.Equal(httpResponseLayer.ReasonPhrase, httpResponseDatagram.ReasonPhrase);
+                    Assert.Equal<byte>(httpResponseLayer.ReasonPhrase, httpResponseDatagram.ReasonPhrase); // xunit 1 does type compare!
                 }
                 Assert.Equal(httpLayer.Header, httpDatagram.Header);
                 if (httpLayer.Header != null)

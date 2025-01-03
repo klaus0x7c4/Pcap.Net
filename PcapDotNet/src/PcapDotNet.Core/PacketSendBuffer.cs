@@ -17,7 +17,7 @@ namespace PcapDotNet.Core
         private int _currentBufferPosition;
 
         /// <summary>
-        /// This function allocates a send buffer, i.e. a buffer containing a set of raw packets that will be transimtted on the network with PacketCommunicator.Transmit().
+        /// This function allocates a send buffer, i.e. a buffer containing a set of raw packets that will be transmitted on the network with PacketCommunicator.Transmit().
         /// </summary>
         /// <param name="capacity">The size, in bytes, of the buffer, therefore it determines the maximum amount of data that the buffer will contain.</param>
         public PacketSendBuffer(uint capacity)
@@ -44,7 +44,7 @@ namespace PcapDotNet.Core
             {
                 throw new ArgumentNullException(nameof(packet));
             }
-            
+
             var hdrSize = Interop.Pcap.PcapHeaderSize;
             if (hdrSize + packet.Length > _buffer.Length - _currentBufferPosition)
             {
@@ -89,11 +89,12 @@ namespace PcapDotNet.Core
                 };
                 int numBytesTransmitted = Interop.Pcap.pcap_sendqueue_transmit(pcapDescriptor, ref pcapSendQueue, isSync ? 1 : 0);
                 if(numBytesTransmitted < _currentBufferPosition)
-                    PcapError.ThrowInvalidOperation("Failed transmiting packets from queue", pcapDescriptor);
+                    PcapError.ThrowInvalidOperation("Failed transmitting packets from queue", pcapDescriptor);
             }
         }
-
+#if NETCOREAPP1_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private void CheckDisposed()
         {
             if(_buffer == null)

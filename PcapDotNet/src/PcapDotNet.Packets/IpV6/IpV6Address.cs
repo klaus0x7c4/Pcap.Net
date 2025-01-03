@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using PcapDotNet.Base;
 using PcapDotNet.Packets.IpV4;
+using UInt128 = PcapDotNet.Base.UInt128;
 
 namespace PcapDotNet.Packets.IpV6
 {
@@ -54,7 +55,7 @@ namespace PcapDotNet.Packets.IpV6
                 throw new ArgumentNullException("value");
 
             string cannonizedValue = value;
-            
+
             // Handle ...:1.2.3.4
             int lastColonIndex = cannonizedValue.LastIndexOf(':');
             if (lastColonIndex == -1)

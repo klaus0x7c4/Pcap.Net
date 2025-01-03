@@ -1,9 +1,9 @@
-﻿// This file is inspired by SharpPcap project
+// This file is inspired by SharpPcap project
 using System;
 
 namespace PcapDotNet.Core.Native
 {
-    internal static class Interop
+    public static class Interop
     {
         static Interop()
         {
@@ -25,8 +25,6 @@ namespace PcapDotNet.Core.Native
 
         public static IPcapPal Pcap { get; private set; }
 
-        public static ISysPal Sys { get; private set; }
-
-        
+        internal static ISysPal Sys { get; private set; }
     }
 }

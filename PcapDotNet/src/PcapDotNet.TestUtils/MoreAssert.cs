@@ -77,16 +77,16 @@ namespace PcapDotNet.TestUtils
                 return;
 
             if(expectedSequence.Count() != actualSequence.Count())
-                Assert.Fail("Different Count. " + message);
+                Assert.False(true, "Different Count. " + message);
 
             List<T> expectedList = expectedSequence.ToList();
             List<T> actualList = actualSequence.ToList();
             for (int i = 0; i != expectedList.Count; ++i)
             {
                  if(!EqualityComparer<T>.Default.Equals(expectedList[i], actualList[i]))
-                    Assert.Fail("Element " + (i + 1) + " is different in the sequence. " + message);
+                    Assert.False(true, "Element " + (i + 1) + " is different in the sequence. " + message);
             }
-            Assert.Fail(message);
+            Assert.False(true, message);
         }
 
         public static void AreSequenceEqual<T>(IEnumerable<T> expectedSequence, IEnumerable<T> actualSequence)

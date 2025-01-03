@@ -70,7 +70,7 @@ namespace PcapDotNet.Base.Test
             }
             catch (Exception)
             {
-                Assert.Fail();
+                Assert.False(true);
                 return;
             }
             Assert.Equal(overflow, (ulong)value); 

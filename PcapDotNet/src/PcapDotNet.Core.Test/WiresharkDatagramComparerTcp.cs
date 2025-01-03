@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -490,7 +490,7 @@ namespace PcapDotNet.Core.Test
                                 break;
 
                             case TcpOptionType.SelectiveNegativeAcknowledgements: // TODO: Support Selective Negative Acknowledgements.
-                                Assert.StartsWith("SACK permitted", field.Show());
+                                Assert.True(field.Show().StartsWith("SACK permitted"));
                                 field.AssertNoFields();
                                 break;
 
@@ -513,7 +513,7 @@ namespace PcapDotNet.Core.Test
 
                             case (TcpOptionType)30:
                                 // TODO: Support 30.
-                                Assert.StartsWith("Multipath TCP", field.Show());
+                                Assert.True(field.Show().StartsWith("Multipath TCP"));
                                 break;
 
                             case (TcpOptionType)78:

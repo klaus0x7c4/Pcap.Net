@@ -4,6 +4,7 @@ using System.Linq;
 using System.Management;
 using System.Net.NetworkInformation;
 using Microsoft.Win32;
+using PcapDotNet.Core.Native;
 using PcapDotNet.Packets;
 using PcapDotNet.Packets.Ethernet;
 
@@ -31,6 +32,8 @@ namespace PcapDotNet.Core.Extensions
                 throw new ArgumentNullException("livePacketDevice");
 
             string livePacketDeviceName = livePacketDevice.Name;
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+                return livePacketDeviceName;
             if (!livePacketDeviceName.StartsWith(NamePrefix, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture,
@@ -50,11 +53,14 @@ namespace PcapDotNet.Core.Extensions
         /// <exception cref="InvalidOperationException">When the PNPDeviceID cannot be retrieved from the registry.</exception>
         public static string GetPnpDeviceId(this LivePacketDevice livePacketDevice)
         {
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+                throw new InvalidOperationException("Platform not supported");
+
             string guid = livePacketDevice.GetGuid();
 
             using (RegistryKey key = Registry.LocalMachine.OpenSubKey(NetworkConnectionConfigKey + @"\" + guid + @"\Connection"))
             {
-                string pnpDeviceId = key.GetValue("PnpInstanceID") as string;
+                string pnpDeviceId = key?.GetValue("PnpInstanceID") as string;
                 if (pnpDeviceId == null)
                     throw new InvalidOperationException("Could not find PNP Device ID in the registry");
                 return pnpDeviceId;
@@ -75,7 +81,7 @@ namespace PcapDotNet.Core.Extensions
                 throw new ArgumentNullException("livePacketDevice");
 
             string guid = GetGuid(livePacketDevice);
-            return NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(networkInterface => networkInterface.Id == guid);
+            return Interop.Pcap.GetAllNetworkInterfacesByDotNet().FirstOrDefault(networkInterface => networkInterface.Id == guid);
         }
 
         /// <summary>
@@ -95,6 +101,12 @@ namespace PcapDotNet.Core.Extensions
                 return new MacAddress(addressBytes.ReadUInt48(0, Endianity.Big));
             }
 
+            if (Environment.OSVersion.Platform != PlatformID.Unix && Environment.OSVersion.Platform != PlatformID.MacOSX
+                && livePacketDevice.Name == "rpcap://\\Device\\NPF_Loopback")
+            {
+                return new MacAddress();
+            }
+
             return livePacketDevice.GetMacAddressWmi();
         }
 
@@ -107,6 +119,9 @@ namespace PcapDotNet.Core.Extensions
         /// <exception cref="InvalidOperationException">When the <see cref="MacAddress"/> cannot be retrieved using WMI.</exception>
         private static MacAddress GetMacAddressWmi(this LivePacketDevice livePacketDevice)
         {
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+                throw new InvalidOperationException("No MAC Address on device: " + livePacketDevice.Name);
+
             string pnpDeviceId = livePacketDevice.GetPnpDeviceId();
             string escapedPnpDeviceId = pnpDeviceId.Replace(@"\", @"\\");
 

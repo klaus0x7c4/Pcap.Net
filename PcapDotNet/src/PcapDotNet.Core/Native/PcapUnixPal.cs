@@ -1,4 +1,5 @@
 using System;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -9,6 +10,8 @@ namespace PcapDotNet.Core.Native
 {
     internal class PcapUnixPal : IPcapPal
     {
+        private bool _breakloop;
+
         public PcapUnixPal()
         {
             PcapHeaderSize = Marshal.SizeOf(typeof(pcap_pkthdr_unix));
@@ -53,6 +56,11 @@ namespace PcapDotNet.Core.Native
             return handle;
         }
 
+        public NetworkInterface[] GetAllNetworkInterfacesByDotNet()
+        {
+            return NetworkInterface.GetAllNetworkInterfaces();
+        }
+
         public PacketTotalStatistics GetTotalStatistics(PcapHandle pcapDescriptor)
         {
             var stat = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PcapUnmanagedStructures.pcap_stat_unix)));
@@ -80,6 +88,7 @@ namespace PcapDotNet.Core.Native
 
         public int pcap_breakloop(PcapHandle p)
         {
+            _breakloop = true;
             return SafeNativeMethods.pcap_breakloop(p);
         }
 
@@ -125,9 +134,17 @@ namespace PcapDotNet.Core.Native
             return SafeNativeMethods.pcap_datalink_val_to_name(dlt);
         }
 
-        public int pcap_dispatch(PcapHandle adaptHandle, int count, pcap_handler callback, IntPtr ptr)
+        public int pcap_dispatch(PcapHandle adaptHandle, int count, pcap_handler callback, IntPtr ptr, out bool breakloop)
         {
-            return SafeNativeMethods.pcap_dispatch(adaptHandle, count, callback, ptr);
+            if (!PacketsForReceive(adaptHandle))
+            {
+                breakloop = false;
+                return 0;
+            }
+            var result = SafeNativeMethods.pcap_dispatch(adaptHandle, count, callback, ptr);
+            breakloop = _breakloop;
+            _breakloop = false;
+            return result;
         }
 
         public void pcap_dump(IntPtr user, IntPtr h, IntPtr sp)
@@ -206,7 +223,12 @@ namespace PcapDotNet.Core.Native
 
         public int pcap_next_ex(PcapHandle adaptHandle, ref IntPtr header, ref IntPtr data)
         {
-            return SafeNativeMethods.pcap_next_ex(adaptHandle, ref header, ref data);
+            if (!PacketsForReceive(adaptHandle))
+                return 0;
+
+            var result = SafeNativeMethods.pcap_next_ex(adaptHandle, ref header, ref data);
+            _breakloop = false;
+            return result;
         }
 
         public int pcap_offline_filter(IntPtr prog, IntPtr header, IntPtr pkt_data)
@@ -216,9 +238,14 @@ namespace PcapDotNet.Core.Native
 
         public PcapHandle pcap_open(string dev, int packetLen, int flags, int read_timeout, ref pcap_rmtauth rmtauth, out string errbuf)
         {
-            var result = SafeNativeMethods.pcap_open(dev, packetLen, flags, read_timeout, ref rmtauth, out var errorBuffer);
+            var handle = SafeNativeMethods.pcap_open_live(dev, packetLen, flags & (int)PacketDeviceOpenAttributes.Promiscuous, read_timeout, out var errorBuffer);
             errbuf = errorBuffer.ToString();
-            return result;
+            if (!handle.IsInvalid)
+            {
+                handle.FileDescriptor = SafeNativeMethods.pcap_get_selectable_fd(handle);
+                handle.Timeout = read_timeout;
+            }
+            return handle;
         }
 
         public PcapHandle pcap_open_dead(int linktype, int snaplen)
@@ -248,11 +275,6 @@ namespace PcapDotNet.Core.Native
             var result = SafeNativeMethods.pcap_setnonblock(adaptHandle, nonblock, out var errorBuffer);
             errbuf = errorBuffer.ToString();
             return result;
-        }
-
-        public int pcap_set_buffer_size(PcapHandle adapter, int bufferSizeInBytes)
-        {
-            return SafeNativeMethods.pcap_set_buffer_size(adapter, bufferSizeInBytes);
         }
 
         public int pcap_set_promisc(PcapHandle p, int promisc)
@@ -287,57 +309,58 @@ namespace PcapDotNet.Core.Native
 
         public int pcap_set_datalink(PcapHandle adaptHandle, int dlt)
         {
-            throw new NotImplementedException();
+            return SafeNativeMethods.pcap_set_datalink(adaptHandle, dlt);
         }
 
         public int pcap_list_datalinks(PcapHandle adaptHandle, ref IntPtr dataLinkList)
         {
-            throw new NotImplementedException();
+            return SafeNativeMethods.pcap_list_datalinks(adaptHandle, ref dataLinkList);
         }
 
         public void pcap_free_datalinks(IntPtr dataLinkList)
         {
-            throw new NotImplementedException();
+            SafeNativeMethods.pcap_free_datalinks(dataLinkList);
         }
 
         public int pcap_loop(PcapHandle adaptHandle, int count, pcap_handler callback, IntPtr ptr)
         {
-            throw new NotImplementedException();
+            _breakloop = false;
+            return SafeNativeMethods.pcap_loop(adaptHandle, count, callback, ptr);
         }
 
         public int pcap_is_swapped(PcapHandle adapter)
         {
-            throw new NotImplementedException();
+            return SafeNativeMethods.pcap_is_swapped(adapter);
         }
 
         public int pcap_major_version(PcapHandle adapter)
         {
-            throw new NotImplementedException();
+            return SafeNativeMethods.pcap_major_version(adapter);
         }
 
         public int pcap_minor_version(PcapHandle adapter)
         {
-            throw new NotImplementedException();
+            return SafeNativeMethods.pcap_minor_version(adapter);
         }
 
         public int pcap_setmode(PcapHandle adapter, PacketCommunicatorMode mode)
         {
-            throw new NotImplementedException();
+            throw new PlatformNotSupportedException();
         }
 
         public int pcap_setbuff(PcapHandle adapter, int dim)
         {
-            throw new NotImplementedException();
+            return SafeNativeMethods.pcap_set_buffer_size(adapter, dim);
         }
 
         public int pcap_setmintocopy(PcapHandle adapter, int size)
         {
-            throw new NotImplementedException();
+            throw new PlatformNotSupportedException();
         }
 
         public IntPtr pcap_setsampling(PcapHandle adapter)
         {
-            throw new NotImplementedException();
+            throw new PlatformNotSupportedException();
         }
 
         public int pcap_sendqueue_transmit(PcapHandle p, ref pcap_send_queue queue, int sync)
@@ -345,8 +368,46 @@ namespace PcapDotNet.Core.Native
             throw new PlatformNotSupportedException();
         }
 
+        private struct Pollfd
+        {
+            public int fd;
+            public PollEvents events;
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
+            public PollEvents revents;
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
+        }
+
+        [Flags]
+        private enum PollEvents : short
+        {
+            POLLIN = 0x0001, // There is data to read
+            POLLPRI = 0x0002, // There is urgent data to read
+            POLLOUT = 0x0004, // Writing now will not block
+            POLLERR = 0x0008, // Error condition
+            POLLHUP = 0x0010, // Hung up
+            POLLNVAL = 0x0020, // Invalid request; fd not open
+        }
+
         /// <summary>
-        /// Per http://msdn.microsoft.com/en-us/ms182161.aspx 
+        /// Poll for packet receive otherwise read functions will block.
+        /// </summary>
+        /// <returns>true if data got received</returns>
+        private bool PacketsForReceive(PcapHandle p)
+        {
+            if (p.FileDescriptor == 0) // ignore files
+            {
+                return true;
+            }
+            var pollFds = new Pollfd[1];
+            pollFds[0].fd = p.FileDescriptor;
+            pollFds[0].events = PollEvents.POLLPRI | PollEvents.POLLIN;
+
+            var result = SafeNativeMethods.Poll(pollFds, (uint)pollFds.Length, p.Timeout);
+            return result > 0;
+        }
+
+        /// <summary>
+        /// Per http://msdn.microsoft.com/en-us/ms182161.aspx
         /// </summary>
         [SuppressUnmanagedCodeSecurity]
         private static class SafeNativeMethods
@@ -358,6 +419,9 @@ namespace PcapDotNet.Core.Native
             //       See http://www.mono-project.com/Interop_with_Native_Libraries#Library_Names
             private const string PCAP_DLL = "libpcap";
 
+            [DllImport("libc", SetLastError = true, EntryPoint = "poll")]
+            internal static extern int Poll([In, Out] Pollfd[] ufds, uint nfds, int timeout);
+
             [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
             internal extern static int pcap_findalldevs(
                 ref PcapInterfaceHandle /* pcap_if_t** */ alldevs,
@@ -367,12 +431,11 @@ namespace PcapDotNet.Core.Native
             internal extern static void pcap_freealldevs(IntPtr /* pcap_if_t* */ alldevs);
 
             [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
-            internal extern static PcapHandle /* pcap_t* */ pcap_open(
-                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(PcapStringMarshaler))] string dev,
-                int packetLen,
-                int flags,
-                int read_timeout,
-                ref pcap_rmtauth rmtauth,
+            internal static extern PcapHandle /* pcap_t* */ pcap_open_live(
+                [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(PcapStringMarshaler))] string device,
+                int snapLen,
+                int promisc,
+                int to_ms,
                 out PcapErrorBuffer /* char* */ errbuf);
 
             [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
@@ -575,7 +638,68 @@ namespace PcapDotNet.Core.Native
             internal extern static int pcap_set_timeout(PcapHandle /* pcap_t* */ p, int to_ms);
 
             /// <summary>
-            /// pcap_activate() is used to activate a packet capture handle to look at packets on the network, with the options that were set on the handle being in effect.  
+            /// set the link-layer header type to be used by a capture device
+            /// </summary>
+            /// <param name="dlt">new link-layer header type of the pcap descriptor which should be used</param>
+            /// <returns>0 on success, PCAP_ERROR_NOT_ACTIVATED if called on a capture handle that has been created but not activated, or PCAP_ERROR on other errors. If PCAP_ERROR is returned, pcap_geterr(3PCAP) or pcap_perror(3PCAP) may be called with p as an argument to fetch or display the error text.</returns>
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
+            internal extern static int pcap_set_datalink(PcapHandle /* pcap_t* */ p, int dlt);
+
+            /// <summary>
+            /// Is used to get a list of the supported link-layer header types of the interface associated with the pcap descriptor. pcap_list_datalinks() allocates an array to hold the list and sets *dataLinkList to point to that array.
+            /// The caller is responsible for freeing the array with pcap_free_datalinks(), which frees the list of link-layer header types pointed to by dataLinkList.
+            /// It must not be called on a pcap descriptor created by pcap_create(3PCAP) that has not yet been activated by pcap_activate(3PCAP).
+            /// </summary>
+            /// <param name="dataLinkList">list of link-layer header types supported by a capture device</param>
+            /// <returns>The number of link-layer header types in the array on success, PCAP_ERROR_NOT_ACTIVATED if called on a capture handle that has been created but not activated, and PCAP_ERROR on other errors. If PCAP_ERROR is returned, pcap_geterr(3PCAP) or pcap_perror(3PCAP) may be called with p as an argument to fetch or display the error text.</returns>
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
+            internal extern static int pcap_list_datalinks(PcapHandle /* pcap_t* */ p, ref IntPtr dataLinkList);
+
+            /// <summary>
+            /// Frees the list of link-layer header types pointed to by dataLinkList.
+            /// </summary>
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
+            internal extern static void pcap_free_datalinks(IntPtr /* int* */ dataLinkList);
+
+            /// <summary>
+            /// Set nonblocking mode. pcap_loop() and pcap_next() doesnt work in  nonblocking mode!
+            /// </summary>
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
+            internal extern static int pcap_loop(PcapHandle /* pcap_t* */ p, int count, pcap_handler callback, IntPtr ptr);
+
+            /// <summary>
+            /// find out whether a 'savefile' has the native byte order
+            /// </summary>
+            /// <returns>
+            /// returns true (1) if p refers to a 'savefile' that uses a different byte order than the current system. For a live capture, it always returns false (0). Returns PCAP_ERROR_NOT_ACTIVATED if called on a capture handle that has been created but not activated.
+            /// </returns>
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
+            internal extern static int pcap_is_swapped(PcapHandle /* pcap_t* */ p);
+
+            /// <summary>
+            /// The version number of a 'savefile'
+            /// </summary>
+            /// <returns>The major number of the file format of the 'savefile'</returns>
+            /// <remarks>
+            /// The version number is stored in the 'savefile'; note that the meaning of its values depends on the type of 'savefile' (for example, pcap or pcapng).
+            /// If p refers to a live capture, the values returned by pcap_major_version() and pcap_minor_version() are not meaningful.
+            /// </remarks>
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
+            internal extern static int pcap_major_version(PcapHandle /* pcap_t* */ p);
+
+            /// <summary>
+            /// The version number of a 'savefile'
+            /// </summary>
+            /// <returns>The minor number of the file format of the 'savefile'</returns>
+            /// <remarks>
+            /// The version number is stored in the 'savefile'; note that the meaning of its values depends on the type of 'savefile' (for example, pcap or pcapng).
+            /// If p refers to a live capture, the values returned by pcap_major_version() and pcap_minor_version() are not meaningful.
+            /// </remarks>
+            [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]
+            internal extern static int pcap_minor_version(PcapHandle /* pcap_t* */ p);
+
+            /// <summary>
+            /// pcap_activate() is used to activate a packet capture handle to look at packets on the network, with the options that were set on the handle being in effect.
             /// </summary>
             /// <returns>Returns 0 on success without warnings, a non-zero positive value on success with warnings, and a negative value on error. A non-zero return value indicates what warning or error condition occurred.</returns>
             [DllImport(PCAP_DLL, CallingConvention = CallingConvention.Cdecl)]

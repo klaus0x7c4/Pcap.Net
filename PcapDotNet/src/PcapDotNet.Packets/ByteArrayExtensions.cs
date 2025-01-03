@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Net;
 using System.Numerics;
 using System.Text;
@@ -10,6 +9,7 @@ using PcapDotNet.Packets.Ethernet;
 using PcapDotNet.Packets.Http;
 using PcapDotNet.Packets.IpV4;
 using PcapDotNet.Packets.IpV6;
+using UInt128 = PcapDotNet.Base.UInt128;
 
 namespace PcapDotNet.Packets
 {
@@ -140,7 +140,7 @@ namespace PcapDotNet.Packets
         /// <returns>The value read from the buffer.</returns>
         public static byte ReadByte(this byte[] buffer, int offset)
         {
-            if (buffer == null) 
+            if (buffer == null)
                 throw new ArgumentNullException("buffer");
             return buffer[offset];
         }
@@ -386,7 +386,7 @@ namespace PcapDotNet.Packets
         /// <returns>The value converted from the read bytes according to the endianity.</returns>
         public static BigInteger ReadUnsignedBigInteger(this byte[] buffer, int offset, int length, Endianity endianity)
         {
-            if (buffer == null) 
+            if (buffer == null)
                 throw new ArgumentNullException("buffer");
 
             BigInteger value = BigInteger.Zero;
@@ -493,7 +493,7 @@ namespace PcapDotNet.Packets
         /// <param name="value">The value to write.</param>
         public static void Write(this byte[] buffer, int offset, byte value)
         {
-            if (buffer == null) 
+            if (buffer == null)
                 throw new ArgumentNullException("buffer");
 
             buffer[offset] = value;
@@ -519,9 +519,9 @@ namespace PcapDotNet.Packets
         /// <param name="value">The value to write.</param>
         public static void Write(this byte[] buffer, ref int offset, IEnumerable<byte> value)
         {
-            if (buffer == null) 
+            if (buffer == null)
                 throw new ArgumentNullException("buffer");
-            if (value == null) 
+            if (value == null)
                 throw new ArgumentNullException("value");
 
             foreach (byte b in value)
@@ -750,9 +750,9 @@ namespace PcapDotNet.Packets
         /// <param name="endianity">The endianity to use when converting the value to bytes.</param>
         public static void WriteUnsigned(this byte[] buffer, int offset, BigInteger value, int length, Endianity endianity)
         {
-            if (buffer == null) 
+            if (buffer == null)
                 throw new ArgumentNullException("buffer");
-            
+
             if (value.Sign < 0)
                 throw new ArgumentOutOfRangeException("value", value, "Must be non-negative.");
             for (int i = 0; i != length && value != BigInteger.Zero; ++i, value >>= 8)
@@ -800,7 +800,7 @@ namespace PcapDotNet.Packets
         /// <param name="value">The value to write.</param>
         public static void Write(this byte[] buffer, ref int offset, DataSegment value)
         {
-            if (value == null) 
+            if (value == null)
                 throw new ArgumentNullException("value");
 
             value.Write(buffer, offset);
@@ -966,7 +966,7 @@ namespace PcapDotNet.Packets
             {
                 UInt48* resultPtr = &result;
                 byte* resultBytePtr = (byte*)resultPtr;
-                
+
                 UInt48* valuePtr = &value;
                 byte* valueBytePtr = (byte*)valuePtr;
 
@@ -1087,7 +1087,7 @@ namespace PcapDotNet.Packets
                 }
             }
         }
-        
+
         private static void Write(byte[] buffer, int offset, int value)
         {
             unsafe

@@ -1,5 +1,5 @@
 using System;
-using System.Runtime.InteropServices;
+using System.Net.NetworkInformation;
 using System.Text;
 using PcapDotNet.Packets;
 using static PcapDotNet.Core.Native.PcapUnmanagedStructures;
@@ -7,7 +7,7 @@ using static PcapDotNet.Core.Native.PcapUnmanagedStructures;
 namespace PcapDotNet.Core.Native
 {
 #pragma warning disable IDE1006 // Naming Styles
-    internal interface IPcapPal
+    public interface IPcapPal
     {
         Encoding StringEncoding { get; }
 
@@ -32,6 +32,8 @@ namespace PcapDotNet.Core.Native
         /// <returns>NULL or pointer to the first pcap_if_t entry</returns>
         /// <exception cref="InvalidOperationException">if native libpcap call respond an error</exception>
         PcapInterfaceHandle GetAllLocalMachine();
+
+        NetworkInterface[] GetAllNetworkInterfacesByDotNet();
 
         PacketTotalStatistics GetTotalStatistics(PcapHandle pcapDescriptor);
 
@@ -64,8 +66,6 @@ namespace PcapDotNet.Core.Native
         /// <param name="snaplen">Specifies the snapshot length for the pcap_t</param>
         /// <returns>An IntPtr to a pcap_t structure</returns>
         PcapHandle /* pcap_t* */ pcap_open_dead(int linktype, int snaplen);
-
-        int pcap_set_buffer_size(PcapHandle /* pcap_t */ adapter, int bufferSizeInBytes);
 
         /// <summary>Open a file to write packets. </summary>
         IntPtr /*pcap_dumper_t * */ pcap_dump_open(PcapHandle /*pcap_t * */adaptHandle, string /*const char* */fname);
@@ -207,7 +207,7 @@ namespace PcapDotNet.Core.Native
         /// <summary>
         /// Read packets until cnt packets are processed or an error occurs.
         /// </summary>
-        int pcap_dispatch(PcapHandle /* pcap_t* */ adaptHandle, int count, pcap_handler callback, IntPtr ptr);
+        int pcap_dispatch(PcapHandle /* pcap_t* */ adaptHandle, int count, pcap_handler callback, IntPtr ptr, out bool breakloop);
 
         /// <summary>
         /// Read packets until cnt packets are processed or an error occurs.

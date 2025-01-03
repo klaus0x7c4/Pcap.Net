@@ -140,7 +140,7 @@ namespace PcapDotNet.Core
         {
             return Name + " (" + Description + ")";
         }
-        
+
         /// <inheritdoc/>
         public bool Equals(PcapDataLink other)
         {
@@ -162,19 +162,24 @@ namespace PcapDotNet.Core
             return _value.GetHashCode();
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Determines whether the specified PcapDataLink objects are equal.
+        /// </summary>
         public static bool operator ==(PcapDataLink dataLink1, PcapDataLink dataLink2)
         {
             return Equals(dataLink1, dataLink2);
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Determines whether the specified PcapDataLink objects are unequal.
+        /// </summary>
         public static bool operator !=(PcapDataLink dataLink1, PcapDataLink dataLink2)
         {
             return !Equals(dataLink1, dataLink2);
         }
-
+#if NETCOREAPP1_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private static bool Equals(PcapDataLink dataLink1, PcapDataLink dataLink2)
         {
             return dataLink1._value == dataLink2._value;

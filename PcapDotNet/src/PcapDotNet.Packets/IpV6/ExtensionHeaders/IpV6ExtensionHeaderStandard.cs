@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using PcapDotNet.Base;
 using PcapDotNet.Packets.IpV4;
@@ -58,7 +59,7 @@ namespace PcapDotNet.Packets.IpV6
 
         internal abstract int GetDataHashCode();
 
-        internal IpV6ExtensionHeaderStandard(IpV4Protocol? nextHeader) 
+        internal IpV6ExtensionHeaderStandard(IpV4Protocol? nextHeader)
             : base(nextHeader)
         {
         }

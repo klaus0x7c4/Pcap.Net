@@ -1,10 +1,8 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Reflection;
-using PcapDotNet.Base;
 
 namespace PcapDotNet.Packets.Dns
 {
@@ -14,7 +12,7 @@ namespace PcapDotNet.Packets.Dns
     /// </summary>
     public abstract class DnsResourceData
     {
-        internal const int StringMinimumLength = sizeof(byte); 
+        internal const int StringMinimumLength = sizeof(byte);
 
         /// <summary>
         /// Returns the DnsResourceData concrete type that should be created for the given DnsType.
@@ -84,7 +82,7 @@ namespace PcapDotNet.Packets.Dns
         {
             var prototypes =
                 from type in Assembly.GetExecutingAssembly().GetTypes()
-                from attribute in type.GetCustomAttributes<DnsTypeRegistrationAttribute>(false)
+                from attribute in (IEnumerable<DnsTypeRegistrationAttribute>)type.GetCustomAttributes(typeof(DnsTypeRegistrationAttribute), false)
                 where typeof(DnsResourceData).IsAssignableFrom(type)
                 select new
                        {

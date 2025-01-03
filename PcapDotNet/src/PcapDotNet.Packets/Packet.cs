@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -49,7 +49,7 @@ namespace PcapDotNet.Packets
         /// <param name="timestamp">A timestamp of the packet - when it was captured.</param>
         /// <param name="dataLink">The type of the datalink of the packet.</param>
         /// <param name="originalLength">
-        /// Length this packet (off wire). 
+        /// Length this packet (off wire).
         /// If the value is less than the data size, it is ignored and the original length is considered to be equal to the data size.
         /// </param>
         public Packet(byte[] data, DateTime timestamp, IDataLink dataLink, uint originalLength)
@@ -79,7 +79,7 @@ namespace PcapDotNet.Packets
         /// <param name="timestamp">A timestamp of the packet - when it was captured.</param>
         /// <param name="dataLink">The type of the datalink of the packet.</param>
         /// <param name="originalLength">
-        /// Length this packet (off wire). 
+        /// Length this packet (off wire).
         /// If the value is less than the data size, it is ignored and the original length is considered to be equal to the data size.
         /// </param>
         public Packet(byte[] data, DateTime timestamp, DataLinkKind dataLink, uint originalLength)
@@ -220,7 +220,7 @@ namespace PcapDotNet.Packets
         public byte this[int index]
         {
             get { return Buffer[index]; }
-            set { throw new InvalidOperationException("Immutable collection"); ; }
+            set { throw new InvalidOperationException("Immutable collection"); }
         }
 
         /// <summary>

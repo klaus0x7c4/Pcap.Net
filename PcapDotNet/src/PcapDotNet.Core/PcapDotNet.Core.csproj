@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" Condition="'$(TargetFramework)' == 'net80'" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\PcapDotNet.Base\PcapDotNet.Base.csproj" />
     <ProjectReference Include="..\PcapDotNet.Packets\PcapDotNet.Packets.csproj" />
   </ItemGroup>

@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using PcapDotNet.Base;
+using EncodingExtensions = PcapDotNet.Base.EncodingExtensions;
 
 namespace PcapDotNet.Packets.Http
 {
@@ -43,7 +43,7 @@ namespace PcapDotNet.Packets.Http
                 token = null;
                 return Fail();
             }
-            
+
             token = new Datagram(_buffer, _offset, tokenLength);
             _offset += token.Length;
             return this;
@@ -132,7 +132,7 @@ namespace PcapDotNet.Packets.Http
                     _offset += text.Count();
                 }
             }
-            
+
             return this;
         }
 
@@ -350,7 +350,7 @@ namespace PcapDotNet.Packets.Http
             while (Success && IsNext(AsciiBytes.Semicolon))
             {
                 Bytes(AsciiBytes.Semicolon);
-                
+
                 string chunkExtensionName;
                 Token(out chunkExtensionName);
                 if (IsNext(AsciiBytes.EqualsSign))
@@ -443,7 +443,7 @@ namespace PcapDotNet.Packets.Http
         }
 
         private static readonly byte[] _httpSlash = Encoding.ASCII.GetBytes("HTTP/");
-    
+
         private readonly byte[] _buffer;
         private int _offset;
         private readonly int _totalLength;

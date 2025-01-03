@@ -4,6 +4,7 @@ using System.Text;
 using PcapDotNet.Base;
 using PcapDotNet.Core.Native;
 using PcapDotNet.Packets.IpV6;
+using UInt128 = PcapDotNet.Base.UInt128;
 
 namespace PcapDotNet.Core
 {
@@ -15,12 +16,12 @@ namespace PcapDotNet.Core
         private readonly IpV6Address _address;
 
         internal IpV6SocketAddress(IntPtr /* sockaddr* */ address) :
-            base((ushort)SocketAddressFamily.Internet6)
+            base(SocketAddressFamily.Internet6)
         {
             if (address == IntPtr.Zero)
                 throw new ArgumentNullException(nameof(address));
 
-            var sockaddr_in6 = Marshal.PtrToStructure<PcapUnmanagedStructures.sockaddr_in6>(address);
+            var sockaddr_in6 = (PcapUnmanagedStructures.sockaddr_in6)Marshal.PtrToStructure(address, typeof(PcapUnmanagedStructures.sockaddr_in6));
             var byteValue = sockaddr_in6.sin6_addr;
             UInt128 value128 = BitSequence.Merge(byteValue[0], byteValue[1], byteValue[2], byteValue[3],
                                           byteValue[4], byteValue[5], byteValue[6], byteValue[7],

@@ -15,8 +15,18 @@ namespace PcapDotNet.Core
             int readTimeout,
             PcapUnmanagedStructures.pcap_rmtauth auth,
             SocketAddress netmask)
-            : base(PcapOpen(source, snapshotLength, attributes, readTimeout, auth), netmask)
-        { }
+            : base(netmask)
+        {
+            try
+            {
+                PcapDescriptor = PcapOpen(source, snapshotLength, attributes, readTimeout, auth);
+            }
+            catch (Exception)
+            {
+                GC.SuppressFinalize(this);
+                throw;
+            }
+        }
 
         /// <summary>
         /// Statistics on current capture.
@@ -41,6 +51,7 @@ namespace PcapDotNet.Core
         ///   <list type="bullet">
         ///     <item>Using this function is more efficient than issuing a series of SendPacket(), because the packets are buffered in the kernel driver, so the number of context switches is reduced. Therefore, expect a better throughput when using Transmit().</item>
         ///     <item>When isSync is true, the packets are synchronized in the kernel with a high precision timestamp. This requires a non-negligible amount of CPU, but allows normally to send the packets with a precision of some microseconds (depending on the accuracy of the performance counter of the machine). Such a precision cannot be reached sending the packets with SendPacket().</item>
+        ///     <item>On Windows with intel network adapter you will receive packets twice since npcap 0.999.</item>
         ///   </list>
         /// </remarks>
         public override void Transmit(PacketSendBuffer sendBuffer, bool isSync)

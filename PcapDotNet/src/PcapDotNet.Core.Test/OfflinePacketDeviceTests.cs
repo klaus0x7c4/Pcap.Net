@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,8 @@ using PcapDotNet.Packets.Ethernet;
 using PcapDotNet.Packets.TestUtils;
 using PcapDotNet.TestUtils;
 using Xunit;
+using Xunit.Extensions;
+using TaskExtensions = PcapDotNet.Core.Extensions.TaskExtensions;
 
 namespace PcapDotNet.Core.Test
 {
@@ -15,7 +18,6 @@ namespace PcapDotNet.Core.Test
     /// Summary description for OfflinePacketDeviceTests
     /// </summary>
     [ExcludeFromCodeCoverage]
-    [Collection(nameof(LivePacketDeviceTests))]
     public class OfflinePacketDeviceTests
     {
         private static void TestOpenMultipleTimes(int numTimes, string filename)
@@ -47,6 +49,15 @@ namespace PcapDotNet.Core.Test
             }
         }
 
+#if !REAL
+        private readonly TestablePcapPal _pal;
+
+        public OfflinePacketDeviceTests()
+        {
+            _pal = TestablePcapPal.UseTestPal();
+        }
+#endif
+
         [Fact]
         public void OpenOfflineMultipleTimes()
         {
@@ -56,10 +67,15 @@ namespace PcapDotNet.Core.Test
         [Fact]
         public void OpenOfflineMultipleTimesUnicode()
         {
-            // TODO: Fix so we can go beyond 509 when using unicode filenames. See http://www.winpcap.org/pipermail/winpcap-bugs/2012-December/001547.html
             TestOpenMultipleTimes(100, @"דמפ.pcap");
         }
-
+#if NETCOREAPP2_0_OR_GREATER
+        [Fact]
+        public void LongUnicode_OpenOfflineMultipleTimes_NoError()
+        {
+            TestOpenMultipleTimes(100, @"דמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפדמפ.pcap");
+        }
+#endif
         [Fact]
         public void GetPacketTest()
         {
@@ -90,26 +106,52 @@ namespace PcapDotNet.Core.Test
             }
         }
 
-        [Fact]
-        public void GetSomePacketsTest()
+        public static IEnumerable<object[]> GetSomePacketsTestData
         {
-            const int NumPacketsToSend = 100;
+            get
+            {
+                const int NumPacketsToSend = 100;
 
-            // Normal
-            TestGetSomePackets(NumPacketsToSend, NumPacketsToSend, int.MaxValue, PacketCommunicatorReceiveResult.Ok, NumPacketsToSend, 0.05, 0.05);
-            TestGetSomePackets(NumPacketsToSend, NumPacketsToSend / 2, int.MaxValue, PacketCommunicatorReceiveResult.Ok, NumPacketsToSend / 2, 0.05, 0.05);
-
-            // Eof
-            // ToDo: 'pcap_dispatch' does not return expected value, 0 as undefined behaviour on different plattforms
-            TestGetSomePackets(NumPacketsToSend, 0, int.MaxValue, PacketCommunicatorReceiveResult.Eof, NumPacketsToSend, 0.05, 0.05);
-            TestGetSomePackets(NumPacketsToSend, -1, int.MaxValue, PacketCommunicatorReceiveResult.Eof, NumPacketsToSend, 0.05, 0.05);
-            TestGetSomePackets(NumPacketsToSend, NumPacketsToSend + 1, int.MaxValue, PacketCommunicatorReceiveResult.Eof, NumPacketsToSend, 0.05, 0.05);
-
-            // Break loop
-            TestGetSomePackets(NumPacketsToSend, NumPacketsToSend, NumPacketsToSend / 2, PacketCommunicatorReceiveResult.Ok, NumPacketsToSend / 2, 0.05, 0.05);
-            TestGetSomePackets(NumPacketsToSend, NumPacketsToSend, 0, PacketCommunicatorReceiveResult.BreakLoop, 0, 0.05, 0.05);
+                // Normal
+                yield return new object[] { NumPacketsToSend, NumPacketsToSend, int.MaxValue, PacketCommunicatorReceiveResult.Ok, NumPacketsToSend, 0.05, 0.05 };
+                yield return new object[] { NumPacketsToSend, NumPacketsToSend / 2, int.MaxValue, PacketCommunicatorReceiveResult.Ok, NumPacketsToSend / 2, 0.05, 0.05 };
+                // Eof, for all npcap behaves differently! winpcap returns 0, npcap returns 100
+                yield return new object[] { NumPacketsToSend, 0, int.MaxValue, PacketCommunicatorReceiveResult.Eof, NumPacketsToSend, 0.05, 0.05 };
+                yield return new object[] { NumPacketsToSend, -1, int.MaxValue, PacketCommunicatorReceiveResult.Eof, NumPacketsToSend, 0.05, 0.05 };
+                yield return new object[] { NumPacketsToSend, NumPacketsToSend + 1, int.MaxValue, PacketCommunicatorReceiveResult.Eof, NumPacketsToSend, 0.05, 0.05 };
+                // Break loop
+                yield return new object[] { NumPacketsToSend, NumPacketsToSend, NumPacketsToSend / 2, PacketCommunicatorReceiveResult.Ok, NumPacketsToSend / 2, 0.05, 0.05 };
+                yield return new object[] { NumPacketsToSend, NumPacketsToSend, 0, PacketCommunicatorReceiveResult.BreakLoop, 0, 0.05, 0.05 };
+            }
         }
 
+        [Theory]
+#if NETCOREAPP2_0_OR_GREATER
+        [MemberData
+#else
+        [PropertyData
+#endif
+            (nameof(GetSomePacketsTestData))]
+        public void GetSomePacketsTest_NpCap(int numPacketsToSend, int numPacketsToGet, int numPacketsToBreakLoop,
+            PacketCommunicatorReceiveResult expectedResult, int expectedNumPackets, double expectedMinSeconds, double expectedMaxSeconds)
+        {
+            TestGetSomePackets(numPacketsToSend, numPacketsToGet, numPacketsToBreakLoop, expectedResult, expectedNumPackets, expectedMinSeconds, expectedMaxSeconds);
+        }
+#if !REAL // prevent duplicate execute
+        [Theory]
+#if NETCOREAPP2_0_OR_GREATER
+        [MemberData
+#else
+        [PropertyData
+#endif
+            (nameof(GetSomePacketsTestData))]
+        public void GetSomePacketsTest_WinPcap(int numPacketsToSend, int numPacketsToGet, int numPacketsToBreakLoop,
+            PacketCommunicatorReceiveResult expectedResult, int expectedNumPackets, double expectedMinSeconds, double expectedMaxSeconds)
+        {
+            _pal.SetWinPcapBehavior();
+            TestGetSomePackets(numPacketsToSend, numPacketsToGet, numPacketsToBreakLoop, expectedResult, expectedNumPackets, expectedMinSeconds, expectedMaxSeconds);
+        }
+#endif
         private const int GetPacketsTest_NumPacketsToSend = 100;
 
         [Theory]
@@ -124,7 +166,7 @@ namespace PcapDotNet.Core.Test
         // Break loop
         [InlineData(GetPacketsTest_NumPacketsToSend, GetPacketsTest_NumPacketsToSend, GetPacketsTest_NumPacketsToSend / 2, PacketCommunicatorReceiveResult.BreakLoop, GetPacketsTest_NumPacketsToSend / 2, 0.05, 0.05)]
         [InlineData(GetPacketsTest_NumPacketsToSend, GetPacketsTest_NumPacketsToSend, 0, PacketCommunicatorReceiveResult.BreakLoop, 0, 0.05, 0.05)]
-        public async Task GetPacketsTest(int numPacketsToSend, int numPacketsToGet, int numPacketsToBreakLoop,
+        public void GetPacketsTest(int numPacketsToSend, int numPacketsToGet, int numPacketsToBreakLoop,
                                                PacketCommunicatorReceiveResult expectedResult, int expectedNumPackets,
                                                double expectedMinSeconds, double expectedMaxSeconds)
         {
@@ -145,12 +187,12 @@ namespace PcapDotNet.Core.Test
                 PacketHandler handler = new PacketHandler(expectedPacket, expectedMinSeconds, expectedMaxSeconds, communicator, numPacketsToBreakLoop);
 
                 PacketCommunicatorReceiveResult result = PacketCommunicatorReceiveResult.None;
-                var task = Task.Run(delegate ()
+                var task = Task.Factory.StartNew(() =>
                 {
                     result = communicator.ReceivePackets(numPacketsToGet, handler.Handle);
                 });
-                var delay = Task.Delay(TimeSpan.FromSeconds(5));
-                await Task.WhenAny(task, delay);
+                var delay = TaskExtensions.Delay(TimeSpan.FromSeconds(5));
+                Task.WaitAny(task, delay);
 
                 Assert.True(expectedResult == result, testDescription);
                 Assert.Equal(expectedNumPackets, handler.NumPacketsHandled);
@@ -165,17 +207,34 @@ namespace PcapDotNet.Core.Test
                 Assert.Throws<InvalidOperationException>(() => communicator.Mode = PacketCommunicatorMode.Statistics);
             }
         }
-
+#if !REAL // prevent duplicate execute
         [Fact]
-        public void SetNonBlockTest()
+        public void WinPcap_SetNonBlockTest()
+        {
+            _pal.SetWinPcapBehavior();
+            using (PacketCommunicator communicator = OpenOfflineDevice())
+            {
+                Assert.False(communicator.NonBlocking);
+                communicator.NonBlocking = false;
+                Assert.False(communicator.NonBlocking);
+                communicator.NonBlocking = true;
+                Assert.False(communicator.NonBlocking);
+            }
+        }
+#endif
+        [Fact] // set nonblocking is not supported in npcap, workaround is used to catch
+        public void Npcap_SetNonBlockTest()
         {
             using (PacketCommunicator communicator = OpenOfflineDevice())
             {
                 Assert.False(communicator.NonBlocking);
-                Assert.Throws<InvalidOperationException>(() => communicator.NonBlocking = false);
+                communicator.NonBlocking = false;
+                Assert.False(communicator.NonBlocking);
+                communicator.NonBlocking = true;
+                Assert.False(communicator.NonBlocking);
             }
         }
-
+#if REAL // only testable on real OfflinePacketCommunicator
         [Fact]
         public void GetTotalStatisticsErrorTest()
         {
@@ -190,7 +249,7 @@ namespace PcapDotNet.Core.Test
         {
             Assert.Throws<InvalidOperationException>(() => new OfflinePacketDevice("myinvalidfile").Open());
         }
-
+#endif
         [Fact]
         public void OpenNullFilenameTest()
         {
@@ -214,7 +273,7 @@ namespace PcapDotNet.Core.Test
                 Assert.Throws<InvalidOperationException>(() => communicator.SetKernelBufferSize(1024 * 1024));
             }
         }
-
+        // fails on REAL unix because no exception
         [Fact]
         public void SetlKernelMinimumBytesToCopyErrorTest()
         {
@@ -224,6 +283,7 @@ namespace PcapDotNet.Core.Test
             }
         }
 
+        // sampling pcap files not supported in npcap, see savefile.c for change in pcapint_offline_read (before pcap_offline_read)
         [Fact]
         public void SetSamplingMethodOneEveryNTest()
         {
@@ -245,11 +305,12 @@ namespace PcapDotNet.Core.Test
             }
         }
 
+        // sampling pcap files not supported in npcap, see savefile.c for change in pcapint_offline_read (before pcap_offline_read)
         [Fact]
         public void SetSamplingMethodFirstAfterIntervalTest()
         {
             const int NumPackets = 10;
-            
+
             Packet expectedPacket = _random.NextEthernetPacket(100);
             using (PacketCommunicator communicator = OpenOfflineDevice(NumPackets, expectedPacket, TimeSpan.FromSeconds(1)))
             {
@@ -270,19 +331,21 @@ namespace PcapDotNet.Core.Test
                 Assert.Null(packet);
             }
         }
-
+#if REAL // only testable on real OfflinePacketCommunicator
+        // fails on REAL unix because no exception
         [Fact]
         public void DumpToBadFileTest()
         {
             Assert.Throws<InvalidOperationException>(() => OpenOfflineDevice(10, _random.NextEthernetPacket(100), TimeSpan.Zero, "??"));
         }
-        
+
         [Fact]
         public void EmptyNameTest()
         {
             Assert.Throws<InvalidOperationException>(() => OpenOfflineDevice(10, _random.NextEthernetPacket(100), TimeSpan.Zero, string.Empty));
         }
-
+#endif
+        // this test fails only with winpcap, with specific OEM codepages (i.e. 437)
         [Fact]
         public void ReadWriteIso88591FilenameTest()
         {
@@ -302,25 +365,24 @@ namespace PcapDotNet.Core.Test
             Assert.True(File.Exists(DumpFilename), string.Format("File {0} doesn't exist", DumpFilename));
         }
 
-        // TODO: Add this test once Dumping to files with Unicode filenames is supported. See http://www.winpcap.org/pipermail/winpcap-users/2011-February/004273.html
-//        [Fact]
-//        public void ReadWriteUnicodeFilenameTest()
-//        {
-//            const string DumpFilename = "abc_\u00F9_\u05D0\u05D1\u05D2.pcap";
-//            const int NumPackets = 10;
-//            Packet expectedPacket = PacketBuilder.Build(DateTime.Now, new EthernetLayer {EtherType = EthernetType.IpV4});
-//            using (PacketCommunicator communicator = OpenOfflineDevice(NumPackets, expectedPacket, TimeSpan.FromSeconds(0.1), DumpFilename))
-//            {
-//                for (int i = 0; i != NumPackets; ++i)
-//                {
-//                    Packet actualPacket;
-//                    Assert.Equal(PacketCommunicatorReceiveResult.Ok, communicator.ReceivePacket(out actualPacket));
-//                    Assert.Equal(expectedPacket, actualPacket);
-//                }
-//            }
-//
-//            Assert.True(File.Exists(DumpFilename), "File " + DumpFilename, " doesn't exist");
-//        }
+        // this test fails only with winpcap
+        [Fact]
+        public void ReadWriteUnicodeFilenameTest()
+        {
+            const string DumpFilename = "abc_\u00F9_\u05D0\u05D1\u05D2.pcap";
+            const int NumPackets = 10;
+            var expectedPacket = PacketBuilder.Build(DateTime.Now, new EthernetLayer { EtherType = EthernetType.IpV4 });
+            using (PacketCommunicator communicator = OpenOfflineDevice(NumPackets, expectedPacket, TimeSpan.FromSeconds(0.1), DumpFilename))
+            {
+                for (int i = 0; i != NumPackets; ++i)
+                {
+                    Assert.Equal(PacketCommunicatorReceiveResult.Ok, communicator.ReceivePacket(out var actualPacket));
+                    Assert.Equal(expectedPacket, actualPacket);
+                }
+            }
+
+            Assert.True(File.Exists(DumpFilename), $"File {DumpFilename} doesn't exist");
+        }
 
         [Fact]
         public void ReadUnicodeFilenameTest()
@@ -342,12 +404,15 @@ namespace PcapDotNet.Core.Test
             Assert.True(File.Exists(ReadUnicodeFilename), string.Format("File {0} doesn't exist", ReadUnicodeFilename));
         }
 
-
         [Fact]
         public void ReadNonExistingUnicodeFilenameTest()
         {
             const string ReadUnicodeFilename = "abc_non_existing_\u00F9_\u05D0\u05D1\u05D2.pcap";
+#if REAL
             OfflinePacketDevice device = new OfflinePacketDevice(ReadUnicodeFilename);
+#else
+            var device = new TestableOfflinePacketDevice(ReadUnicodeFilename);
+#endif
             Assert.Throws<InvalidOperationException>(() => device.Open());
         }
 
@@ -379,17 +444,7 @@ namespace PcapDotNet.Core.Test
             }
         }
 
-        public static OfflinePacketDevice GetOfflineDevice(int numPackets, Packet packet)
-        {
-            return GetOfflineDevice(numPackets, packet, TimeSpan.Zero);
-        }
-
-        public static OfflinePacketDevice GetOfflineDevice(int numPackets, Packet packet, TimeSpan intervalBetweenPackets)
-        {
-            return GetOfflineDevice(numPackets, packet, intervalBetweenPackets, Path.Combine(Path.GetTempPath(), "dump.pcap"));
-        }
-
-        public static OfflinePacketDevice GetOfflineDevice(int numPackets, Packet packet, TimeSpan intervalBetweenPackets, string dumpFilename, string readFilename = null)
+        public static PacketDevice GetOfflineDevice(int numPackets, Packet packet, TimeSpan intervalBetweenPackets, string dumpFilename, string readFilename = null)
         {
             if (readFilename == null)
                 readFilename = dumpFilename;
@@ -421,13 +476,15 @@ namespace PcapDotNet.Core.Test
                     File.Delete(readFilename);
                 File.Move(dumpFilename, readFilename);
             }
-
+#if REAL
             OfflinePacketDevice device = new OfflinePacketDevice(readFilename);
             Assert.Empty(device.Addresses);
-            Assert.Equal(string.Empty, device.Description);
+            Assert.Empty(device.Description);
             Assert.Equal(DeviceAttributes.None, device.Attributes);
             Assert.Equal(readFilename, device.Name);
-
+#else
+            var device = new TestableOfflinePacketDevice(readFilename);
+#endif
             return device;
         }
 
@@ -443,7 +500,7 @@ namespace PcapDotNet.Core.Test
 
         public static PacketCommunicator OpenOfflineDevice(int numPackets, Packet packet, TimeSpan intervalBetweenPackets)
         {
-            return OpenOfflineDevice(numPackets, packet, intervalBetweenPackets, Path.Combine(Path.GetTempPath() + @"dump.pcap"));
+            return OpenOfflineDevice(numPackets, packet, intervalBetweenPackets, Path.Combine(Path.GetTempPath(), @"dump.pcap"));
         }
 
         private static PacketCommunicator OpenOfflineDevice(int numPackets, Packet packet, TimeSpan intervalBetweenPackets, string dumpFilename, string readFilename = null)
@@ -452,6 +509,7 @@ namespace PcapDotNet.Core.Test
             PacketCommunicator communicator = device.Open();
             try
             {
+#if REAL
                 MoreAssert.AreSequenceEqual(new[] {DataLinkKind.Ethernet}.Select(kind => new PcapDataLink(kind)), communicator.SupportedDataLinks);
                 Assert.Equal(DataLinkKind.Ethernet, communicator.DataLink.Kind);
                 Assert.Equal("EN10MB (Ethernet)", communicator.DataLink.ToString());
@@ -462,6 +520,7 @@ namespace PcapDotNet.Core.Test
                 Assert.Equal(PacketDevice.DefaultSnapshotLength, communicator.SnapshotLength);
                 Assert.Equal(2, communicator.FileMajorVersion);
                 Assert.Equal(4, communicator.FileMinorVersion);
+#endif
                 return communicator;
             }
             catch (Exception)

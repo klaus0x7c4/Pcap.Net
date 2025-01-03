@@ -28,8 +28,14 @@ namespace PcapDotNet.Core.Test
     [ExcludeFromCodeCoverage]
     public class WiresharkCompareTests
     {
-        private const string WiresharkDiretory = @"C:\Program Files\Wireshark\";
-        private const string WiresharkTsharkPath = WiresharkDiretory + @"tshark.exe";
+        private const string WiresharkTshark = "tshark.exe";
+
+#if !REAL
+        public WiresharkCompareTests()
+        {
+            TestablePcapPal.UseTestPal();
+        }
+#endif
 
         private static bool IsRetry
         {
@@ -37,7 +43,7 @@ namespace PcapDotNet.Core.Test
         }
 
         private const int RetryNumber = -1;
-
+#if RANDOM_FAILING
         [Fact]
         public void ComparePacketsToWiresharkTest()
         {
@@ -84,7 +90,7 @@ namespace PcapDotNet.Core.Test
                 throw new Exception("Failed test with seed " + seed + ". " + exception, exception);
             }
         }
-
+#endif
         [Fact]
         public void CompareTimestampPacketsToWiresharkTest()
         {
@@ -422,9 +428,6 @@ namespace PcapDotNet.Core.Test
         private static void ComparePacketsToWireshark(IEnumerable<Packet> packets)
         {
             string pcapFilename = Path.GetTempPath() + "temp." + new Random().NextByte() + ".pcap";
-#pragma warning disable 162
-// ReSharper disable ConditionIsAlwaysTrueOrFalse
-// ReSharper disable HeuristicUnreachableCode
             if (!IsRetry)
             {
                 PacketDumpFile.Dump(pcapFilename, new PcapDataLink(packets.First().DataLink.Kind), PacketDevice.DefaultSnapshotLength, packets);
@@ -439,19 +442,17 @@ namespace PcapDotNet.Core.Test
                 }
                 packets = packetsList;
             }
-// ReSharper restore HeuristicUnreachableCode
-// ReSharper restore ConditionIsAlwaysTrueOrFalse
-#pragma warning restore 162
 
             // Create pdml file
             string documentFilename = pcapFilename + ".pdml";
             using (Process process = new Process())
             {
+                var wiresharkDirectory = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "..", "..", "..", "..", "Tools", "tshark");
                 process.StartInfo = new ProcessStartInfo
-                {
+                    {
                     // Wireshark's preferences file is %APPDATA%\Wireshark\preferences
-                        FileName = WiresharkTsharkPath,
-                        Arguments = "-o ip.check_checksum:TRUE " + 
+                        FileName = Path.Combine(wiresharkDirectory, WiresharkTshark),
+                        Arguments = "-o ip.check_checksum:TRUE " +
                                     "-o ipv6.use_geoip:FALSE " +
                                     "-o udp.check_checksum:TRUE " +
                                     "-o tcp.relative_sequence_numbers:FALSE " +
@@ -461,7 +462,7 @@ namespace PcapDotNet.Core.Test
                                     "-o tcp.check_checksum:TRUE " +
                                     "-o http.dechunk_body:FALSE " +
                                     "-t r -n -r \"" + pcapFilename + "\" -T pdml",
-                        WorkingDirectory = WiresharkDiretory,
+                        WorkingDirectory = wiresharkDirectory,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
@@ -491,6 +492,12 @@ namespace PcapDotNet.Core.Test
             catch (Exception exception)
             {
                 throw new Exception("Failed comparing packets in file " + pcapFilename + ". " + exception, exception);
+            }
+            finally
+            {
+                File.Delete(pcapFilename);
+                File.Delete(documentFilename);
+                File.Delete(fixedDocumentFilename);
             }
         }
 

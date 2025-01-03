@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 
 namespace PcapDotNet.Core.Extensions
 {
@@ -21,7 +22,9 @@ namespace PcapDotNet.Core.Extensions
             if (networkInterface == null)
                 throw new ArgumentNullException("networkInterface");
 
-            return LivePacketDevice.AllLocalMachine.FirstOrDefault(device => device.Name == LivePacketDeviceExtensions.NamePrefix + networkInterface.Id);
+            return LivePacketDevice.AllLocalMachine.FirstOrDefault(device => Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX
+                                                                       ? device.Name == networkInterface.Id
+                                                                       : device.Name == LivePacketDeviceExtensions.NamePrefix + networkInterface.Id);
         }
     }
 }

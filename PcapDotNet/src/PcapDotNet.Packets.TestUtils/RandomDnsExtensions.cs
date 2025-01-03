@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -8,6 +8,7 @@ using PcapDotNet.Packets.Dns;
 using PcapDotNet.Packets.IpV4;
 using PcapDotNet.Packets.IpV6;
 using PcapDotNet.TestUtils;
+using UInt128 = PcapDotNet.Base.UInt128;
 
 namespace PcapDotNet.Packets.TestUtils
 {

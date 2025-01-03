@@ -2,6 +2,8 @@ using PcapDotNet.Core.Native;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 
 namespace PcapDotNet.Core
@@ -20,7 +22,7 @@ namespace PcapDotNet.Core
         /// </returns>
         /// <exception cref="InvalidOperationException">
         /// Thrown if some errors occurred. 
-        /// An error could be due to several reasons: 
+        /// An error could be due to several reasons:
         ///   <list type="bullet">
         ///     <item>libpcap/WinPcap was not installed on the local/remote host.</item>
         ///     <item>The user does not have enough privileges to list the devices.</item>
@@ -35,32 +37,41 @@ namespace PcapDotNet.Core
         {
             get
             {
+                const string NamePrefix = @"rpcap://\Device\NPF_";
                 using (var devicePtrHandle = Interop.Pcap.GetAllLocalMachine())
                 {
+                    var nics = Interop.Pcap.GetAllNetworkInterfacesByDotNet();
                     var deviceList = new List<LivePacketDevice>();
                     foreach (var pcap_if in devicePtrHandle.GetManagedData())
                     {
-                        deviceList.Add(new LivePacketDevice(pcap_if));
+                        deviceList.Add(new LivePacketDevice(pcap_if, nics.FirstOrDefault(networkInterface => Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX
+                                                                                             ? pcap_if.Name == networkInterface.Id
+                                                                                             : pcap_if.Name == NamePrefix + networkInterface.Id)));
                     }
                     return new ReadOnlyCollection<LivePacketDevice>(deviceList);
                 }
             }
         }
 
-        private LivePacketDevice(PcapUnmanagedStructures.pcap_if device)
+        private LivePacketDevice(PcapUnmanagedStructures.pcap_if device, NetworkInterface networkInterface)
         {
             Name = device.Name;
-            Description = device.Description;
+            if (Environment.OSVersion.Platform != PlatformID.Unix && Environment.OSVersion.Platform != PlatformID.MacOSX)
+                Description = device.Description;
+            else
+                Description = $"Network adapter '{device.Name}' on local host";
             Attributes = (DeviceAttributes)device.Flags;
+            Attributes &= DeviceAttributes.Loopback;
+            NetworkInterface = networkInterface;
 
             var addresses = new List<DeviceAddress>();
             var nextaddressPtr = device.Addresses;
             while (nextaddressPtr != IntPtr.Zero)
             {
-                var pcap_addr = Marshal.PtrToStructure<PcapUnmanagedStructures.pcap_addr>(nextaddressPtr);
+                var pcap_addr = (PcapUnmanagedStructures.pcap_addr)Marshal.PtrToStructure(nextaddressPtr, typeof(PcapUnmanagedStructures.pcap_addr));
                 if (pcap_addr.Addr != IntPtr.Zero)
                 {
-                    var sockaddr = Marshal.PtrToStructure<PcapUnmanagedStructures.sockaddr>(pcap_addr.Addr);
+                    var sockaddr = (PcapUnmanagedStructures.sockaddr)Marshal.PtrToStructure(pcap_addr.Addr, typeof(PcapUnmanagedStructures.sockaddr));
                     var family = Interop.Sys.GetSocketAddressFamily(sockaddr.sa_family);
                     if (family == SocketAddressFamily.Internet || family == SocketAddressFamily.Internet6)
                     {
@@ -81,6 +92,11 @@ namespace PcapDotNet.Core
 
         /// <inheritdoc/>
         public override DeviceAttributes Attributes { get; }
+
+        /// <summary>
+        /// Returns if present the NetworkInterface.
+        /// </summary>
+        public NetworkInterface NetworkInterface { get; }
 
         /// <inheritdoc/>
         public override ReadOnlyCollection<DeviceAddress> Addresses { get; }

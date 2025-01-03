@@ -17,7 +17,7 @@ namespace PcapDotNet.Packets.Ethernet
         /// <summary>
         /// A MAC Address of all zeros (00:00:00:00:00:00).
         /// </summary>
-        public static MacAddress Zero 
+        public static MacAddress Zero
         {
             get { return _zero; }
         }

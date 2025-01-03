@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="xunit.assert" Version="2.9.2" />
+    <PackageReference Include="xunit" Version="1.9.2" Condition="'$(TargetFramework)' == 'net40'" />
+    <PackageReference Include="xunit.assert" Version="2.9.2" Condition="'$(TargetFramework)' == 'net80'" />
     <ProjectReference Include="..\PcapDotNet.Base\PcapDotNet.Base.csproj" />
   </ItemGroup>
 

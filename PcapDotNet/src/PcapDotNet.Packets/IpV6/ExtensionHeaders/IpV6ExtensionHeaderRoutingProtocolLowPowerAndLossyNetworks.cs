@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace PcapDotNet.Packets.IpV6
             public const byte CommonPrefixLengthForLastAddress = 0x0F;
             public const byte PadSize = 0xF0;
         }
-        
+
         private static class RoutingDataShift
         {
             public const int CommonPrefixLengthForNonLastAddresses = 4;
@@ -86,8 +87,8 @@ namespace PcapDotNet.Packets.IpV6
         /// For example, a header carrying full IPv6 addresses in Addresses[1..n-1] sets this to 0.
         /// </param>
         /// <param name="commonPrefixLengthForLastAddress">
-        /// Number of prefix octets from the last segment (i.e., segment n) that are elided.  
-        /// For example, a header carrying a full IPv6 address in Addresses[n] sets this to 0. 
+        /// Number of prefix octets from the last segment (i.e., segment n) that are elided.
+        /// For example, a header carrying a full IPv6 address in Addresses[n] sets this to 0.
         /// </param>
         /// <param name="addresses">Routing addresses.</param>
         public IpV6ExtensionHeaderRoutingProtocolLowPowerAndLossyNetworks(IpV4Protocol? nextHeader, byte segmentsLeft, byte commonPrefixLengthForNonLastAddresses,
@@ -154,8 +155,8 @@ namespace PcapDotNet.Packets.IpV6
         public byte CommonPrefixLengthForNonLastAddresses { get; private set; }
 
         /// <summary>
-        /// Number of prefix octets from the last segment (i.e., segment n) that are elided.  
-        /// For example, a header carrying a full IPv6 address in Addresses[n] sets this to 0. 
+        /// Number of prefix octets from the last segment (i.e., segment n) that are elided.
+        /// For example, a header carrying a full IPv6 address in Addresses[n] sets this to 0.
         /// </summary>
         public byte CommonPrefixLengthForLastAddress { get; private set; }
 

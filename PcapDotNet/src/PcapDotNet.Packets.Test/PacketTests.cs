@@ -102,7 +102,7 @@ namespace PcapDotNet.Packets.Test
                     continue;
                 }
 
-                Assert.Fail();
+                Assert.False(true);
             }
         }
 

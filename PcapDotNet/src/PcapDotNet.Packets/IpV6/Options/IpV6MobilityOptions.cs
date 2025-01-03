@@ -138,11 +138,8 @@ namespace PcapDotNet.Packets.IpV6
 
         private static IpV6MobilityOptionTypeRegistrationAttribute GetRegistrationAttribute(Type type)
         {
-            var registraionAttributes = type.GetCustomAttributes<IpV6MobilityOptionTypeRegistrationAttribute>(false);
-            if (!registraionAttributes.Any())
-                return null;
-
-            return registraionAttributes.First();
+            var registrationAttributes = (IEnumerable<IpV6MobilityOptionTypeRegistrationAttribute>)type.GetCustomAttributes(typeof(IpV6MobilityOptionTypeRegistrationAttribute), false);
+            return registrationAttributes.FirstOrDefault();
         }
 
         private static readonly Dictionary<IpV6MobilityOptionType, IpV6MobilityOption> _prototypes = InitializePrototypes();

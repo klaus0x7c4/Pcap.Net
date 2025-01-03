@@ -1,5 +1,7 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using PcapDotNet.Base;
 
 namespace PcapDotNet.Core
 {
@@ -9,7 +11,7 @@ namespace PcapDotNet.Core
     public sealed class OfflinePacketDevice : PacketDevice
     {
         private readonly string _fileName;
- 
+
         /// <summary>
         /// Creates a device object from a pcap file.
         /// The device can opened to read packets from.
@@ -37,7 +39,7 @@ namespace PcapDotNet.Core
         }
 
         /// <summary>
-        /// Interface flags. Currently the only possible flag is Loopback, that is set if the interface is a loopback interface. 
+        /// Interface flags. Currently the only possible flag is Loopback, that is set if the interface is a loopback interface.
         /// </summary>
         public override DeviceAttributes Attributes
         {
@@ -49,11 +51,11 @@ namespace PcapDotNet.Core
         /// </summary>
         public override ReadOnlyCollection<DeviceAddress> Addresses
         {
-            get { return new ReadOnlyCollection<DeviceAddress>(Array.Empty<DeviceAddress>()); }
+            get { return new DeviceAddress[0].AsReadOnly(); }
         }
 
         /// <summary>
-        /// Open a generic source in order to capture / send (WinPcap only) traffic. 
+        /// Open a generic source in order to capture / send (WinPcap only) traffic.
         /// </summary>
         /// <param name="snapshotLength">length of the packet that has to be retained. For each packet received by the filter, only the first 'snapshotLength' bytes are stored in the buffer and passed to the user application. For instance, snaplen equal to 100 means that only the first 100 bytes of each packet are stored.</param>
         /// <param name="attributes">Keeps several flags that can be needed for capturing packets.</param>
@@ -63,5 +65,5 @@ namespace PcapDotNet.Core
         {
             return new OfflinePacketCommunicator(_fileName);
         }
-    };
+    }
 }

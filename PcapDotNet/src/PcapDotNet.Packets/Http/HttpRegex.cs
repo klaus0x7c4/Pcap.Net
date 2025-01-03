@@ -1,7 +1,8 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using PcapDotNet.Base;
+using EncodingExtensions = PcapDotNet.Base.EncodingExtensions;
 
 namespace PcapDotNet.Packets.Http
 {
@@ -93,7 +94,7 @@ namespace PcapDotNet.Packets.Http
                 return AtLeastOne(regex);
             return Build(string.Format(CultureInfo.InvariantCulture, "(?:{0}){{{1},}}", regex, minCount));
         }
-        
+
         public static Regex CommaSeparatedRegex(Regex element, int minCount)
         {
             Regex linearWhiteSpacesRegex = Any(LinearWhiteSpace);
@@ -124,7 +125,7 @@ namespace PcapDotNet.Packets.Http
         private static readonly Regex _qdtextRegex = Or(_linearWhiteSpaceRegex, Build(@"[^\x00-\x1F\x7F""]"));
         private static readonly Regex _quotedStringRegex = Concat(Build('"'), Any(Or(_qdtextRegex, _quotedPairRegex)), Build('"'));
         private static readonly Regex _tokenRegex = AtLeastOne(Build(@"[\x21\x23-\x27\x2A\x2B\x2D\x2E0-9A-Z\x5E-\x7A\x7C\x7E-\xFE]"));
-        private static readonly Regex _valueRegex = Or(Token, QuotedString); 
+        private static readonly Regex _valueRegex = Or(Token, QuotedString);
         private static readonly Regex _parameterRegex = Concat(Capture(_tokenRegex, ParameterNameGroupName), Build("="), Capture(_valueRegex, ParameterValueGroupName));
         private static readonly Regex _optionalParametersRegex = Any(Concat(Build(";"), Optional(_linearWhiteSpaceRegex), _parameterRegex));
 

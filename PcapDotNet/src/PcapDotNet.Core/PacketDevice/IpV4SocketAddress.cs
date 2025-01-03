@@ -15,12 +15,12 @@ namespace PcapDotNet.Core
         private readonly IpV4Address _address;
 
         internal IpV4SocketAddress(IntPtr /* sockaddr* */ address) :
-            base((ushort)SocketAddressFamily.Internet)
+            base(SocketAddressFamily.Internet)
         {
             if (address == IntPtr.Zero)
                 throw new ArgumentNullException(nameof(address));
 
-            var sockaddr_in = Marshal.PtrToStructure<PcapUnmanagedStructures.sockaddr_in>(address);
+            var sockaddr_in = (PcapUnmanagedStructures.sockaddr_in)Marshal.PtrToStructure(address, typeof(PcapUnmanagedStructures.sockaddr_in));
             _address = new IpV4Address((uint)IPAddress.NetworkToHostOrder(unchecked((int)sockaddr_in.sin_addr.s_addr)));
         }
 

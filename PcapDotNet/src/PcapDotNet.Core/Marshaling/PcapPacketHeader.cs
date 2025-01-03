@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 
 namespace PcapDotNet.Core
 {
-    internal sealed class PcapPacketHeader
+    public sealed class PcapPacketHeader
     {
         public PcapPacketHeader(DateTime timestamp, uint packetLength, uint originalLength)
         {

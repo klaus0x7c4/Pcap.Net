@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace PcapDotNet.Core
 {
@@ -31,7 +31,7 @@ namespace PcapDotNet.Core
         public const int PCAP_SAMP_FIRST_AFTER_N_MS = 2;
 
         internal abstract int Method { get; }
-        
+
         internal abstract int Value { get; }
     }
 
@@ -40,7 +40,7 @@ namespace PcapDotNet.Core
     /// In other words, if the interval is set to 10 milliseconds, the first packet is returned to the caller; the next returned one will be the first packet that arrives when 10ms have elapsed.
     /// </summary>
     public sealed class SamplingMethodFirstAfterInterval : SamplingMethod
-    {    
+    {
         private readonly int _intervalInMilliseconds;
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace PcapDotNet.Core
 
     /// <summary>
     /// No sampling has to be done on the current capture.
-    /// In this case, no sampling algorithms are applied to the current capture. 
+    /// In this case, no sampling algorithms are applied to the current capture.
     /// </summary>
     public sealed class SamplingMethodNone : SamplingMethod
     {

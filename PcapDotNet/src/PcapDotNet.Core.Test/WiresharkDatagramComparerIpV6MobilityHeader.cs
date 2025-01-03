@@ -856,7 +856,7 @@ namespace PcapDotNet.Core.Test
                                                 break;
 
                                             case IpV6MobilityOptionType.VendorSpecific:
-                                                Assert.StartsWith("Vendor Specific: ", optionField.Show());
+                                                Assert.True(optionField.Show().StartsWith("Vendor Specific: "));
                                                 IpV6MobilityOptionVendorSpecific vendorSpecific = (IpV6MobilityOptionVendorSpecific)option;
                                                 foreach (XElement optionSubfield in optionField.Fields())
                                                 {
@@ -958,7 +958,7 @@ namespace PcapDotNet.Core.Test
                                                 break;
 
                                             case IpV6MobilityOptionType.MobileNodeIdentifier:
-                                                Assert.StartsWith("Mobile Node Identifier", optionField.Show());
+                                                Assert.True(optionField.Show().StartsWith("Mobile Node Identifier"));
                                                 IpV6MobilityOptionMobileNodeIdentifier mobileNodeIdentifier = (IpV6MobilityOptionMobileNodeIdentifier)option;
                                                 foreach (XElement optionSubfield in optionField.Fields())
                                                 {
@@ -1221,7 +1221,7 @@ namespace PcapDotNet.Core.Test
                                                             break;
 
                                                         case "mip6.mhipv6ap.ipv6_address_prefix":
-                                                            Assert.EndsWith(ipV6AddressPrefix.AddressOrPrefix.ToValue().ToString("x32"), optionSubfield.Value());
+                                                            Assert.True(optionSubfield.Value().StartsWith(ipV6AddressPrefix.AddressOrPrefix.ToValue().ToString("x32")));
                                                             break;
 
                                                         default:

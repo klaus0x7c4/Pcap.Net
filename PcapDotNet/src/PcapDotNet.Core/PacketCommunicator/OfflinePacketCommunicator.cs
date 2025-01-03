@@ -9,8 +9,19 @@ namespace PcapDotNet.Core
     public sealed class OfflinePacketCommunicator : PacketCommunicator
     {
         internal OfflinePacketCommunicator(string fileName)
-            : base(OpenFile(fileName), null)
-        { }
+            : base(null)
+        {
+            _offlineRead = true;
+            try
+            {
+                PcapDescriptor = OpenFile(fileName);
+            }
+            catch (Exception)
+            {
+                GC.SuppressFinalize(this);
+                throw;
+            }
+        }
 
         /// <summary>
         /// TotalStatistics is not supported on offline captures.
@@ -37,16 +48,13 @@ namespace PcapDotNet.Core
                 throw new ArgumentNullException(nameof(fileName));
             }
 
-            // ToDo: This is currently still very simplified
-            // compared to the original native version. Still needs to be revised.
-
             var handle = Interop.Pcap.pcap_open_offline(fileName, out var errorBuffer);
-            if(handle.IsInvalid)
+            if (handle.IsInvalid)
             {
-                PcapError.ThrowInvalidOperation($"Failed opening file {fileName}. Error: {errorBuffer}.", null);
+                throw new InvalidOperationException($"Failed opening file {fileName}. Error: {errorBuffer}.");
             }
 
             return handle;
         }
-    };
+    }
 }

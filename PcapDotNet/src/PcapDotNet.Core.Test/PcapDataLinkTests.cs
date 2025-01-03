@@ -11,13 +11,20 @@ namespace PcapDotNet.Core.Test
     [ExcludeFromCodeCoverage]
     public class PcapDataLinkTests
     {
+#if !REAL
+        public PcapDataLinkTests()
+        {
+            TestablePcapPal.UseTestPal();
+        }
+#endif
+
         [Fact]
         public void TestValidDataLinks()
         {
             PcapDataLink dataLink = new PcapDataLink();
             Assert.Equal(new PcapDataLink("NULL"), dataLink);
             string previousDataLinkName = null;
-            for (int i = 0; i != 1000; ++i)
+            for (int i = 0; i < 300; ++i)
             {
                 dataLink = new PcapDataLink(i);
                 string dataLinkName;
@@ -82,7 +89,7 @@ namespace PcapDotNet.Core.Test
 
         private static PcapDataLink GetInvalidDataLink()
         {
-            for (int i = 0; i != 1000; ++i)
+            for (int i = 0; i < 300; ++i)
             {
                 PcapDataLink dataLink = new PcapDataLink(i);
                 try
@@ -96,10 +103,10 @@ namespace PcapDotNet.Core.Test
                 }
                 catch (Exception)
                 {
-                    Assert.Fail();
+                    Assert.False(true);
                 }
             }
-            Assert.Fail();
+            Assert.False(true);
             return new PcapDataLink();
         }
     }

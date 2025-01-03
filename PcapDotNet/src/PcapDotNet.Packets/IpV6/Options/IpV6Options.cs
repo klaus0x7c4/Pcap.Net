@@ -44,7 +44,7 @@ namespace PcapDotNet.Packets.IpV6
         {
         }
 
-        internal IpV6Options(DataSegment data) 
+        internal IpV6Options(DataSegment data)
             : this(Read(data))
         {
         }
@@ -58,7 +58,7 @@ namespace PcapDotNet.Packets.IpV6
             return new IpV6Options(new Tuple<IList<IpV6Option>, bool>(paddedOptions.ToList(), IsValid));
         }
 
-        internal static Tuple<IList<IpV6Option>, bool> Read(DataSegment data) 
+        internal static Tuple<IList<IpV6Option>, bool> Read(DataSegment data)
         {
             int offset = 0;
             List<IpV6Option> options = new List<IpV6Option>();
@@ -102,7 +102,7 @@ namespace PcapDotNet.Packets.IpV6
             : base(optionsAndIsValid.Item1, optionsAndIsValid.Item2, SumBytesLength(optionsAndIsValid.Item1))
         {
         }
-        
+
         private static IpV6Option CreateOption(IpV6OptionType optionType, DataSegment data)
         {
             IIpV6OptionComplexFactory factory;
@@ -127,11 +127,8 @@ namespace PcapDotNet.Packets.IpV6
 
         private static IpV6OptionTypeRegistrationAttribute GetRegistrationAttribute(Type type)
         {
-            var registraionAttributes = type.GetCustomAttributes<IpV6OptionTypeRegistrationAttribute>(false);
-            if (!registraionAttributes.Any())
-                return null;
-
-            return registraionAttributes.First();
+            var registrationAttributes = (IEnumerable<IpV6OptionTypeRegistrationAttribute>)type.GetCustomAttributes(typeof(IpV6OptionTypeRegistrationAttribute), false);
+            return registrationAttributes.FirstOrDefault();
         }
 
         private static readonly IpV6Options _empty = new IpV6Options();

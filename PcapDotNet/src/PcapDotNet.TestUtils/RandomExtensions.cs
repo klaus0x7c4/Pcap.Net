@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using PcapDotNet.Base;
+using UInt128 = PcapDotNet.Base.UInt128;
 
 namespace PcapDotNet.TestUtils
 {

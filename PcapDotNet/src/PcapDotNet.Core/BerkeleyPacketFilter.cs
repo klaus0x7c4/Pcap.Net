@@ -72,7 +72,7 @@ namespace PcapDotNet.Core
 
         /// <summary>
         /// Returns if a given filter applies to an offline packet.
-        /// This method is used to apply a filter to a packet that is currently in memory. 
+        /// This method is used to apply a filter to a packet that is currently in memory.
         /// This process does not need to open an adapter; we need just to create the proper filter (by settings parameters like the snapshot length, or the link-layer type) by means of the Pcap.
         /// The current API of libpcap does not allow to receive a packet and to filter the packet after it has been received. However, this can be useful in case you want to filter packets in the application, instead of into the receiving process. This function allows you to do the job.
         /// </summary>
@@ -140,7 +140,7 @@ namespace PcapDotNet.Core
             {
                 if (Interop.Pcap.pcap_compile(pcapDescriptor, _bpf, filterString, 1, netmaskValue) != 0)
                 {
-                    throw new ArgumentException("An error has occured when compiling the filter <" + filterString + ">: " + PcapError.GetErrorMessage(pcapDescriptor));
+                    throw new ArgumentException("An error has occurred when compiling the filter <" + filterString + ">: " + PcapError.GetErrorMessage(pcapDescriptor));
                 }
             }
             catch

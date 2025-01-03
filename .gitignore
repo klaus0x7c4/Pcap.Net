@@ -7,6 +7,8 @@ PcapDotNet/src/TestResults
 PcapDotNet.DevelopersPack/3rdParty/
 artifacts/
 .vs/
+.idea/
+.vscode/
 TemporaryGeneratedFile_*
 *.cache
 *.csproj.FileListAbsolute.txt
@@ -15,6 +17,6 @@ TemporaryGeneratedFile_*
 *.pdb
 *.sdf
 *.suo
-*.vcxproj.user
+*.user
 *.db
 *.opendb

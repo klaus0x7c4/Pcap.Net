@@ -1,8 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using PcapDotNet.Base;
 
 namespace PcapDotNet.Packets.Icmp
 {
@@ -37,13 +36,9 @@ namespace PcapDotNet.Packets.Icmp
         private static IcmpDatagramRegistrationAttribute GetRegistrationAttribute(Type type)
         {
             var registrationAttributes =
-                from attribute in type.GetCustomAttributes<IcmpDatagramRegistrationAttribute>(false)
+                from attribute in (IEnumerable<IcmpDatagramRegistrationAttribute>)type.GetCustomAttributes(typeof(IcmpDatagramRegistrationAttribute), false)
                 select attribute;
-
-            if (!registrationAttributes.Any())
-                return null;
-
-            return registrationAttributes.First();
+            return registrationAttributes.FirstOrDefault();
         }
 
         private static readonly Dictionary<IcmpMessageType, IcmpDatagram> _prototypes = InitializeComplexOptions();

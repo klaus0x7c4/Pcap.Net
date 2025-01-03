@@ -26,14 +26,14 @@ using System.Text;
 namespace PcapDotNet.Core.Native
 {
 #pragma warning disable IDE1006 // Naming Styles
-    internal class PcapUnmanagedStructures
+    public class PcapUnmanagedStructures
     {
         /// <summary>
         /// The delegate declaration for PcapHandler requires an UnmanagedFunctionPointer attribute.
         /// Without this it fires for one time and then throws null pointer exception
         /// </summary>
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        internal delegate void pcap_handler(IntPtr param, IntPtr /* pcap_pkthdr* */ header, IntPtr pkt_data);
+        public delegate void pcap_handler(IntPtr param, IntPtr /* pcap_pkthdr* */ header, IntPtr pkt_data);
 
         #region Unmanaged Structs Implementation
 
@@ -263,7 +263,7 @@ namespace PcapDotNet.Core.Native
         /// A queue of raw packets that will be sent to the network with pcap_sendqueue_transmit()
         /// </summary>
         [StructLayout(LayoutKind.Sequential)]
-        internal struct pcap_send_queue
+        public struct pcap_send_queue
         {
             public uint maxlen;
             public uint len;

@@ -5,16 +5,10 @@ namespace PcapDotNet.Core
     /// </summary>
     public class Pcap
     {
-        /// <summary>Represents the infinite number for packet captures </summary>
-        internal const int InfinitePacketCount = -1;
-
-        /* interface is loopback */
-        internal const uint PCAP_IF_LOOPBACK = 0x00000001;
         internal const int MAX_PACKET_SIZE = 65536;
 
         internal const int PCAP_ERRBUF_SIZE = 256;
 
-        internal const string PCAP_SRC_FILE_STRING = "file://";
         internal const string PCAP_SRC_IF_STRING = "rpcap://";
 
         #region native error codes

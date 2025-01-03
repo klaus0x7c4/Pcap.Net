@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -1464,7 +1464,7 @@ namespace PcapDotNet.Core.Test
 
                         case "":
                             DnsType expectedType = nSec3Data.TypesExist[_nSec3TypeIndex++];
-                            Assert.StartsWith("RR type in bit map: ", dataField.Show());
+                            Assert.True(dataField.Show().StartsWith("RR type in bit map: "));
                             if (dataField.Show().EndsWith(string.Format("({0})", (ushort)expectedType)))
                                 dataField.AssertShow(string.Format("RR type in bit map: Unknown ({0})", (ushort)expectedType));
                             else

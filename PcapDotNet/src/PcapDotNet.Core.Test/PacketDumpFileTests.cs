@@ -15,6 +15,13 @@ namespace PcapDotNet.Core.Test
     [ExcludeFromCodeCoverage]
     public class PacketDumpFileTests
     {
+#if !REAL
+        public PacketDumpFileTests()
+        {
+            TestablePcapPal.UseTestPal();
+        }
+#endif
+
         [Fact]
         public void DumpWithoutDeviceTest()
         {

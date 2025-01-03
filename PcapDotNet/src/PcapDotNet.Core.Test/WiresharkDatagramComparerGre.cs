@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml.Linq;
 using PcapDotNet.Packets;
@@ -153,7 +153,7 @@ namespace PcapDotNet.Core.Test
                     break;
 
                 default:
-                    Assert.Fail("Invalid field name: " + field.Name());
+                    Assert.False(true, "Invalid field name: " + field.Name());
                     break;
             }
 

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using PcapDotNet.Base;
 
 namespace PcapDotNet.Packets.IpV6
 {
@@ -114,11 +113,8 @@ namespace PcapDotNet.Packets.IpV6
 
         private static IpV6FlowIdentificationSubOptionTypeRegistrationAttribute GetRegistrationAttribute(Type type)
         {
-            var registraionAttributes = type.GetCustomAttributes<IpV6FlowIdentificationSubOptionTypeRegistrationAttribute>(false);
-            if (!registraionAttributes.Any())
-                return null;
-
-            return registraionAttributes.First();
+            var registrationAttributes = (IEnumerable<IpV6FlowIdentificationSubOptionTypeRegistrationAttribute>)type.GetCustomAttributes(typeof(IpV6FlowIdentificationSubOptionTypeRegistrationAttribute), false);
+            return registrationAttributes.FirstOrDefault();
         }
 
         private static readonly IpV6FlowIdentificationSubOptions _none = new IpV6FlowIdentificationSubOptions();

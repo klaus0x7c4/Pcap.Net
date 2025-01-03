@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
@@ -600,7 +600,7 @@ namespace PcapDotNet.Core.Test
 
                     case IpV4OptionType.MaximumTransmissionUnitProbe:
                         // TODO: Support MTU Proble.
-                        Assert.StartsWith("MTU Probe (" + option.Length + " bytes): ", field.Show());
+                        Assert.True(field.Show().StartsWith("MTU Probe (" + option.Length + " bytes): "));
                         break;
 
                     case (IpV4OptionType)12:
@@ -608,7 +608,7 @@ namespace PcapDotNet.Core.Test
                         if (option.Length != 4)
                             field.AssertShow("MTU Reply (with option length = " + option.Length + " bytes; should be 4)");
                         else
-                            Assert.StartsWith("MTU Reply (4 bytes): ", field.Show());
+                            Assert.True(field.Show().StartsWith("MTU Reply (4 bytes): "));
                         break;
 
                     case (IpV4OptionType)133:

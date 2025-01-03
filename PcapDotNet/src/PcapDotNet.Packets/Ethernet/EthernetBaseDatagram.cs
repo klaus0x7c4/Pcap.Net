@@ -1,4 +1,4 @@
-﻿using PcapDotNet.Packets.Arp;
+using PcapDotNet.Packets.Arp;
 using PcapDotNet.Packets.Ip;
 using PcapDotNet.Packets.IpV4;
 using PcapDotNet.Packets.IpV6;
@@ -58,6 +58,7 @@ namespace PcapDotNet.Packets.Ethernet
         /// This assumes we know how to calculate the actual payload length (For example, by using the Total Length of the IPv4 payload).
         /// If we don't know how to calculate the actual payload length <see langword="null"/> will be returned.
         /// The trailer doesn't include the <see cref="Padding"/> and the <see cref="FrameCheckSequence"/> if any exist.
+        /// Attention: Returns Trailer like Wireshark version up to 3.2.18, starting with 3.3.0 it is splitted with padding.
         /// </summary>
         public DataSegment Trailer
         {
@@ -158,7 +159,7 @@ namespace PcapDotNet.Packets.Ethernet
                 }
             }
         }
-        
+
         /// <summary>
         /// The Ethernet payload as an ARP datagram.
         /// </summary>

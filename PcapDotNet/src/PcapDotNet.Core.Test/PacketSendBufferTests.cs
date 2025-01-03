@@ -12,9 +12,16 @@ namespace PcapDotNet.Core.Test
     /// Summary description for PacketSendQueueTests
     /// </summary>
     [ExcludeFromCodeCoverage]
-    [Collection(nameof(LivePacketDeviceTests))]
     public class PacketSendQueueTests
     {
+#if !REAL
+        public PacketSendQueueTests()
+        {
+            TestablePcapPal.UseTestPal();
+        }
+#endif
+
+        // fails on REAL unix because no packets are sent
         [Fact]
         public void TransmitQueueToLiveTest()
         {
@@ -24,7 +31,8 @@ namespace PcapDotNet.Core.Test
             TestTransmitQueueToLive(10, 1500, 0.5, false);
             TestTransmitQueueToLive(10, 60, 0.5, true);
         }
-
+#if REAL // only testable on real OfflinePacketCommunicator
+        // fails on REAL unix because no packets are sent
         [Fact]
         public void TransmitQueueToOfflineTest()
         {
@@ -41,7 +49,7 @@ namespace PcapDotNet.Core.Test
                 }
             }
         }
-
+#endif
         [Fact]
         public void EnqueueNullTest()
         {
@@ -51,6 +59,8 @@ namespace PcapDotNet.Core.Test
             }
         }
 
+        // this test is only testing the TestablePacketCommunicator, except REAL is set
+#if REAL
         [Fact]
         public void TransmitNullTest()
         {
@@ -59,7 +69,9 @@ namespace PcapDotNet.Core.Test
                 Assert.Throws<ArgumentNullException>(() => communicator.Transmit(null, false));
             }
         }
-
+#endif
+        // fails on linux because of not supported pcap_sendqueue_transmit
+        // since Npcap 0.999 and REAL set: on windows systems with intel network adapter will fail
         private static void TestTransmitQueueToLive(int numPacketsToSend, int packetSize, double secondsBetweenTimestamps, bool isSynced)
         {
             const string SourceMac = "11:22:33:44:55:66";
@@ -113,8 +125,7 @@ namespace PcapDotNet.Core.Test
 
         private static PacketSendBuffer BuildQueue(out List<Packet> packetsToSend, int numPackets, int packetSize, string sourceMac, string destinationMac, double secondsBetweenTimestamps)
         {
-            int rawPacketSize = packetSize + 16; // I don't know why 16
-
+            int rawPacketSize = packetSize + Native.Interop.Pcap.PcapHeaderSize;
             PacketSendBuffer queue = new PacketSendBuffer((uint)(numPackets * rawPacketSize));
             try
             {

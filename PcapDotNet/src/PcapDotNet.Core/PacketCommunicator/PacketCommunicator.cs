@@ -10,7 +10,7 @@ using PcapDotNet.Packets;
 namespace PcapDotNet.Core
 {
     /// <summary>
-    /// Callback definition to handle a captured packted
+    /// Callback definition to handle a captured packet
     /// </summary>
     public delegate void HandlePacket(Packet packet);
     
@@ -20,31 +20,32 @@ namespace PcapDotNet.Core
     public delegate void HandleStatistics(PacketSampleStatistics statistics);
 
     /// <summary>
-    /// Used to receive and send packets accross the network or to read and write packets to a pcap file.
+    /// Used to receive and send packets across the network or to read and write packets to a pcap file.
     /// </summary>
     public abstract class PacketCommunicator : IDisposable
     {
+        protected bool _offlineRead;
         private readonly IpV4SocketAddress _ipV4Netmask;
         private PacketCommunicatorMode _mode;
 
-        internal PacketCommunicator(PcapHandle /* pcap_t* */ pcapDescriptor, SocketAddress netmask)
+        protected PacketCommunicator(SocketAddress netmask)
         {
-            PcapDescriptor = pcapDescriptor;
             _ipV4Netmask = netmask as IpV4SocketAddress;
         }
 
         /// <summary>
-        /// Close the files associated with the capture and deallocates resources. 
+        /// Close the files associated with the capture and deallocates resources.
         /// </summary>
         protected virtual void Dispose(bool disposing)
         {
             PcapDescriptor.Dispose();
         }
-        
+
         /// <inheritdoc/>
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -57,7 +58,7 @@ namespace PcapDotNet.Core
         /// <summary>
         /// pointer to a pcap_t struct
         /// </summary>
-        internal PcapHandle /* pcap_t* */ PcapDescriptor { get; }
+        protected PcapHandle /* pcap_t* */ PcapDescriptor { get; set; }
 
         /// <summary>
         /// The link layer of an adapter.
@@ -98,7 +99,7 @@ namespace PcapDotNet.Core
                 {
                     var results = new List<PcapDataLink>(numDataLinks);
                     for (int i = 0; i != numDataLinks; ++i)
-                        results.Add(new PcapDataLink(Marshal.ReadInt32(dataLinks, i)));
+                        results.Add(new PcapDataLink(Marshal.ReadInt32(dataLinks, i * sizeof(int))));
                     return new ReadOnlyCollection<PcapDataLink>(results);
                 }
                 finally
@@ -109,7 +110,7 @@ namespace PcapDotNet.Core
         }
 
         /// <summary>
-        /// The dimension of the packet portion (in bytes) that is delivered to the application. 
+        /// The dimension of the packet portion (in bytes) that is delivered to the application.
         /// </summary>
         public int SnapshotLength { get => Interop.Pcap.pcap_snapshot(PcapDescriptor); }
 
@@ -175,13 +176,13 @@ namespace PcapDotNet.Core
                 var nonBlockValue = Interop.Pcap.pcap_getnonblock(PcapDescriptor, out var errorBuffer);
                 if (nonBlockValue < 0)
                 {
-                    ThrowInvalidOperation("Error getting NonBlocking value: " + errorBuffer);
+                    ThrowInvalidOperation($"Error getting NonBlocking value: {errorBuffer}");
                 }
                 return nonBlockValue != 0;
             }
             set
             {
-                if (Interop.Pcap.pcap_setnonblock(PcapDescriptor, value ? 1 : 0, out var errorBuffer) < 0)
+                if (Interop.Pcap.pcap_setnonblock(PcapDescriptor, value ? 1 : 0, out var errorBuffer) < 0 && !_offlineRead)
                 {
                     ThrowInvalidOperation($"Error setting NonBlocking to {value}: {errorBuffer}");
                 }
@@ -216,6 +217,11 @@ namespace PcapDotNet.Core
         /// <exception cref="InvalidOperationException">Thrown on failure.</exception>
         public void SetKernelMinimumBytesToCopy(int size)
         {
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+            {
+                return;
+            }
+
             if (Interop.Pcap.pcap_setmintocopy(PcapDescriptor, size) != 0)
             {
                 ThrowInvalidOperation($"Error setting kernel minimum bytes to copy to {size.ToString(CultureInfo.InvariantCulture)}");
@@ -224,12 +230,12 @@ namespace PcapDotNet.Core
 
         /// <summary>
         /// Define a sampling method for packet capture.
-        /// This function allows applying a sampling method to the packet capture process. 
-        /// The mtthod will be applied as soon as the capture starts.
+        /// This function allows applying a sampling method to the packet capture process.
+        /// The method will be applied as soon as the capture starts.
         /// </summary>
         /// <remarks>
         /// Warning: Sampling parameters cannot be changed when a capture is active. These parameters must be applied before starting the capture. If they are applied when the capture is in progress, the new settings are ignored.
-        /// Warning: Sampling works only when capturing data on Win32 or reading from a file. It has not been implemented on other platforms. Sampling works on remote machines provided that the probe (i.e. the capturing device) is a Win32 workstation. 
+        /// Warning: Sampling works only when capturing data on Win32 or reading from a file. It has not been implemented on other platforms. Sampling works on remote machines provided that the probe (i.e. the capturing device) is a Win32 workstation.
         /// </remarks>
         /// <param name="method">The sampling method to be applied</param>
         public void SetSamplingMethod(SamplingMethod method)
@@ -284,7 +290,7 @@ namespace PcapDotNet.Core
 
         /// <summary>
         /// Collect a group of packets.
-        /// Used to collect and process packets. 
+        /// Used to collect and process packets.
         /// <seealso cref="ReceivePacket"/>
         /// <seealso cref="ReceivePackets"/>
         /// <seealso cref="Break"/>
@@ -327,7 +333,8 @@ namespace PcapDotNet.Core
                 PcapDescriptor,
                 maxPackets,
                 handlerDelegate,
-                IntPtr.Zero);
+                IntPtr.Zero,
+                out var breakloop);
 
             switch (countGot)
             {
@@ -338,11 +345,17 @@ namespace PcapDotNet.Core
                     ThrowInvalidOperation("Failed reading from device");
                     break;
                 case 0:
+                    //TODO wrong behavior on opening an empty pcap file for winpcap and npcap
                     if (packetHandler.PacketCounter != 0)
                     {
                         countGot = packetHandler.PacketCounter;
                         return PacketCommunicatorReceiveResult.Eof;
                     }
+                    break;
+                default:
+                    // Npcap fix, because WinPcap returns 0 in pcap_dispatch because of https://github.com/patmarion/winpcap/blob/e1492ede637467457b27ccb94adc34a9fb85d783/WpcapSrc_4_1_3/wpcap/libpcap/savefile.c#L1416C4-L1417C15 has changed to https://github.com/the-tcpdump-group/libpcap/blob/bf563e1b7208664a7d4fdebf6379c848ecf1a4e7/sf-pcap.c#L546
+                    if (_offlineRead && !breakloop && maxPackets != countGot)
+                        return PacketCommunicatorReceiveResult.Eof;
                     break;
             }
 
@@ -585,7 +598,7 @@ namespace PcapDotNet.Core
 
         /// <summary>
         /// Open a file to write packets.
-        /// Called to open an offline capture for writing. The name "-" in a synonym for stdout. 
+        /// Called to open an offline capture for writing. The name "-" in a synonym for stdout.
         /// </summary>
         /// <param name="fileName">Specifies the name of the file to open.</param>
         /// <returns>
@@ -600,8 +613,9 @@ namespace PcapDotNet.Core
         {
             return new PacketDumpFile(PcapDescriptor, fileName);
         }
-
+#if NETCOREAPP1_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private void ThrowInvalidOperation(string errorMessage)
         {
             PcapError.ThrowInvalidOperation(errorMessage, PcapDescriptor);

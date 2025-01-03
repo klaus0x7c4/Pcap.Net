@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Xml.Linq;
 using PcapDotNet.Packets;
@@ -24,7 +24,7 @@ namespace PcapDotNet.Core.Test
                 if (property == null)
                     return null;
 
-                datagram = (Datagram)property.GetValue(datagramParent);
+                datagram = (Datagram)property.GetValue(datagramParent, null);
             }
             if (Ignore(datagram))
                 return null;

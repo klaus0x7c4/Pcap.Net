@@ -580,7 +580,7 @@ namespace PcapDotNet.Core.Test
 
                 case "Length":
                     if (header.IsValid)
-                        Assert.EndsWith(" (" + header.Length + " bytes)", headerFieldShowValue);
+                        Assert.True(headerFieldShowValue.EndsWith(" (" + header.Length + " bytes)"));
                     break;
 
                 case "Router alert":

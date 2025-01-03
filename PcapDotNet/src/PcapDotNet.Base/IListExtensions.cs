@@ -11,6 +11,7 @@ namespace PcapDotNet.Base
     public static class IListExtensions
 // ReSharper restore InconsistentNaming
     {
+#if !NET7_0_OR_GREATER
         /// <summary>
         /// Wraps a list with a ReadOnlyCollection.
         /// </summary>
@@ -21,7 +22,7 @@ namespace PcapDotNet.Base
         {
             return new ReadOnlyCollection<T>(list);
         }
-
+#endif
         /// <summary>
         /// Returns an enumerable of all the elements in the given list starting in a specific offset and taking no more than a specific count.
         /// </summary>

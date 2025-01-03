@@ -1,5 +1,6 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.InteropServices;
+using Xunit;
 [assembly: AssemblyTrademark("Pcap.Net")]
 [assembly: AssemblyCulture("")]
 
@@ -10,3 +11,6 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("bf31bff0-9bbf-431c-b79a-f0df4d758218")]
+#if NETCOREAPP2_0_OR_GREATER
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+#endif

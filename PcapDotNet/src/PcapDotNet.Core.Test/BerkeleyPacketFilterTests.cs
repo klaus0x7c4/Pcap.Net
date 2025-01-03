@@ -10,9 +10,15 @@ namespace PcapDotNet.Core.Test
     /// Summary description for BerkeleyPacketFilterTests
     /// </summary>
     [ExcludeFromCodeCoverage]
-    [Collection(nameof(LivePacketDeviceTests))]
     public class BerkeleyPacketFilterTests
     {
+#if !REAL
+        public BerkeleyPacketFilterTests()
+        {
+            TestablePcapPal.UseTestPal();
+        }
+#endif
+
         [Fact]
         public void BadFilterErrorTest()
         {
@@ -22,6 +28,7 @@ namespace PcapDotNet.Core.Test
             }
         }
 
+        // fails on REAL unix because no packets are sent
         [Fact]
         public void NoCommunicatorConstructorTest()
         {
@@ -41,6 +48,7 @@ namespace PcapDotNet.Core.Test
             }
         }
 
+        // fails on REAL unix because no packets are sent
         [Fact]
         public void NoCommunicatorConstructorWithNetmaskTest()
         {

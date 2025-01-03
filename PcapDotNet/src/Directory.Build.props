@@ -16,36 +16,22 @@
     <AppendTargetFrameworkToOutputPath>True</AppendTargetFrameworkToOutputPath>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <IsPackable>False</IsPackable>
+    <TargetFrameworks>net40;net80</TargetFrameworks>
   </PropertyGroup>
 
   <!-- All none test projects -->
   <Choose>
     <When Condition=" !$(MSBuildProjectName.EndsWith('.Test')) ">
       <PropertyGroup>
-        <TargetFrameworks>netstandard2.0</TargetFrameworks>
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)PcapDotNet.snk</AssemblyOriginatorKeyFile>
       </PropertyGroup>
     </When>
-  </Choose>
-
-  <!-- All test projects -->
-  <Choose>
-    <When Condition=" $(MSBuildProjectName.EndsWith('.TestUtils')) ">
+    <Otherwise>
       <PropertyGroup>
-        <TargetFrameworks>netstandard2.0</TargetFrameworks>
         <GenerateDocumentationFile>False</GenerateDocumentationFile>
       </PropertyGroup>
-    </When>
-  </Choose>
-
-  <Choose>
-    <When Condition=" $(MSBuildProjectName.EndsWith('.Test')) ">
-      <PropertyGroup>
-        <TargetFrameworks>net48;net8.0</TargetFrameworks>
-        <GenerateDocumentationFile>False</GenerateDocumentationFile>
-      </PropertyGroup>
-    </When>
+    </Otherwise>
   </Choose>
   
 </Project>

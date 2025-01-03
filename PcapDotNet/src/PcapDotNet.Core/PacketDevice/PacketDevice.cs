@@ -13,7 +13,7 @@ namespace PcapDotNet.Core
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
         /// <summary>
-        /// This snapshort length value should be sufficient, on most if not all networks, to capture all the data available from the packet.
+        /// This snapshot length value should be sufficient, on most if not all networks, to capture all the data available from the packet.
         /// </summary>
         public const int DefaultSnapshotLength = 65536;
 
@@ -28,7 +28,7 @@ namespace PcapDotNet.Core
         public abstract string Description { get; }
 
         /// <summary>
-        /// Interface flags. Currently the only possible flag is Loopback, that is set if the interface is a loopback interface. 
+        /// Interface flags. Currently the only possible flag is Loopback, that is set if the interface is a loopback interface.
         /// </summary>
         public abstract DeviceAttributes Attributes { get; }
 
@@ -47,8 +47,8 @@ namespace PcapDotNet.Core
         public abstract PacketCommunicator Open(int snapshotLength, PacketDeviceOpenAttributes attributes, int readTimeout);
 
         /// <summary>
-        /// Open a generic source in order to capture / send (WinPcap only) traffic. 
-        /// Uses maxmimum snapshotLength (65536), promiscuous mode and 1 second read timeout.
+        /// Open a generic source in order to capture / send (WinPcap only) traffic.
+        /// Uses maximum snapshotLength (65536), promiscuous mode and 1 second read timeout.
         /// </summary>
         public virtual PacketCommunicator Open()
         {
