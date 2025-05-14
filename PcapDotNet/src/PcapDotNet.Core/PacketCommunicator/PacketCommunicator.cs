@@ -13,7 +13,7 @@ namespace PcapDotNet.Core
     /// Callback definition to handle a captured packted
     /// </summary>
     public delegate void HandlePacket(Packet packet);
-    
+
     /// <summary>
     /// Callback definition to handle next statistic data
     /// </summary>
@@ -34,13 +34,13 @@ namespace PcapDotNet.Core
         }
 
         /// <summary>
-        /// Close the files associated with the capture and deallocates resources. 
+        /// Close the files associated with the capture and deallocates resources.
         /// </summary>
         protected virtual void Dispose(bool disposing)
         {
-            PcapDescriptor.Dispose();
+            PcapDescriptor?.Dispose(); // can be null if creating native handle failed
         }
-        
+
         /// <inheritdoc/>
         public void Dispose()
         {
@@ -55,7 +55,7 @@ namespace PcapDotNet.Core
         }
 
         /// <summary>
-        /// pointer to a pcap_t struct
+        /// pointer to a <c>pcap_t</c> struct
         /// </summary>
         internal PcapHandle /* pcap_t* */ PcapDescriptor { get; }
 
@@ -109,7 +109,7 @@ namespace PcapDotNet.Core
         }
 
         /// <summary>
-        /// The dimension of the packet portion (in bytes) that is delivered to the application. 
+        /// The dimension of the packet portion (in bytes) that is delivered to the application.
         /// </summary>
         public int SnapshotLength { get => Interop.Pcap.pcap_snapshot(PcapDescriptor); }
 

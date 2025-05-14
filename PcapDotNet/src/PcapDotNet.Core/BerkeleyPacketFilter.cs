@@ -6,7 +6,7 @@ using PcapDotNet.Packets;
 namespace PcapDotNet.Core
 {
     /// <summary>
-    /// A packet filter, converting a high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>) in a program that can be interpreted by the kernel-level filtering engine. 
+    /// A packet filter, converting a high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>) in a program that can be interpreted by the kernel-level filtering engine.
     /// The user must dispose instances of this class to deallocate resources.
     /// </summary>
     public sealed class BerkeleyPacketFilter : IDisposable
@@ -14,8 +14,8 @@ namespace PcapDotNet.Core
         private IntPtr /* bpf_program* */ _bpf = IntPtr.Zero;
 
         /// <summary>
-        /// Compile a packet filter without the need of opening an adapter. 
-        /// This constructor converts a high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>) in a program that can be interpreted by the kernel-level filtering engine. 
+        /// Compile a packet filter without the need of opening an adapter.
+        /// This constructor converts a high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>) in a program that can be interpreted by the kernel-level filtering engine.
         /// </summary>
         /// <param name="filterValue">A high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>)</param>
         /// <param name="snapshotLength">Length of the packet that has to be retained of the communicator this filter will be applied on.</param>
@@ -31,7 +31,7 @@ namespace PcapDotNet.Core
         }
 
         /// <summary>
-        /// Compile a packet filter without the need of opening an adapter. 
+        /// Compile a packet filter without the need of opening an adapter.
         /// This constructor converts a high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>) in a program that can be interpreted by the kernel-level filtering engine. 
         /// Assumes the netmask of the network on which packets are being captured isn't known to the program, or that packets are being captured on the Linux "any" pseudo-interface that can capture on more than one network.
         /// Tests for IPv4 broadcast addreses won't be done correctly, but all other tests in the filter program will be OK.
@@ -66,8 +66,8 @@ namespace PcapDotNet.Core
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         ~BerkeleyPacketFilter()
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
-        { 
-            Dispose(false); 
+        {
+            Dispose(false);
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace PcapDotNet.Core
             {
                 if (Interop.Pcap.pcap_compile(pcapDescriptor, _bpf, filterString, 1, netmaskValue) != 0)
                 {
-                    throw new ArgumentException("An error has occured when compiling the filter <" + filterString + ">: " + PcapError.GetErrorMessage(pcapDescriptor));
+                    throw new ArgumentException("An error occurred while compiling the filter <" + filterString + ">: " + PcapError.GetErrorMessage(pcapDescriptor));
                 }
             }
             catch

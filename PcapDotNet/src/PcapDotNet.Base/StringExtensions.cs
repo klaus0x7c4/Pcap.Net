@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 
 namespace PcapDotNet.Base
@@ -14,6 +15,7 @@ namespace PcapDotNet.Base
         /// <param name="minValue">The first char in the chars range.</param>
         /// <param name="maxValue">The last char in the chars range.</param>
         /// <returns>True if all of the string's chars are in the given range.</returns>
+        /// <exception cref="ArgumentNullException">value is null.</exception>
         public static bool AreAllCharactersInRange(this string value, char minValue, char maxValue)
         {
             return value.All(c => c >= minValue && c <= maxValue);

@@ -28,7 +28,7 @@ namespace PcapDotNet.Core.Extensions
         public static string GetGuid(this LivePacketDevice livePacketDevice)
         {
             if (livePacketDevice == null)
-                throw new ArgumentNullException("livePacketDevice");
+                throw new ArgumentNullException(nameof(livePacketDevice));
 
             string livePacketDeviceName = livePacketDevice.Name;
             if (!livePacketDeviceName.StartsWith(NamePrefix, StringComparison.Ordinal))
@@ -72,7 +72,7 @@ namespace PcapDotNet.Core.Extensions
         public static NetworkInterface GetNetworkInterface(this LivePacketDevice livePacketDevice)
         {
             if (livePacketDevice == null)
-                throw new ArgumentNullException("livePacketDevice");
+                throw new ArgumentNullException(nameof(livePacketDevice));
 
             string guid = GetGuid(livePacketDevice);
             return NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(networkInterface => networkInterface.Id == guid);
