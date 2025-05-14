@@ -139,10 +139,10 @@ namespace PcapDotNet.Core.Native
         /// -1 is returned on error, 0 on success. </summary>
         int pcap_dump_flush(IntPtr /*pcap_dumper_t **/p);
 
-        /// <summary>Closes a savefile. </summary>
+        /// <summary>Closes a save file.</summary>
         void pcap_dump_close(IntPtr /*pcap_dumper_t **/p);
 
-        /// <summary> Return the link layer of an adapter. </summary>
+        /// <summary> Return the link layer of an adapter.</summary>
         int pcap_datalink(PcapHandle /* pcap_t* */ adaptHandle);
 
         /// <summary>

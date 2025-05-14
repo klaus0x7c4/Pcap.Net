@@ -10,7 +10,7 @@ using PcapDotNet.Packets;
 namespace PcapDotNet.Core
 {
     /// <summary>
-    /// Callback definition to handle a captured packted
+    /// Callback definition to handle a captured packet
     /// </summary>
     public delegate void HandlePacket(Packet packet);
 
@@ -20,7 +20,7 @@ namespace PcapDotNet.Core
     public delegate void HandleStatistics(PacketSampleStatistics statistics);
 
     /// <summary>
-    /// Used to receive and send packets accross the network or to read and write packets to a pcap file.
+    /// Used to receive and send packets across the network or to read and write packets to a pcap file.
     /// </summary>
     public abstract class PacketCommunicator : IDisposable
     {
@@ -225,7 +225,7 @@ namespace PcapDotNet.Core
         /// <summary>
         /// Define a sampling method for packet capture.
         /// This function allows applying a sampling method to the packet capture process. 
-        /// The mtthod will be applied as soon as the capture starts.
+        /// The method will be applied as soon as the capture starts.
         /// </summary>
         /// <remarks>
         /// Warning: Sampling parameters cannot be changed when a capture is active. These parameters must be applied before starting the capture. If they are applied when the capture is in progress, the new settings are ignored.
