@@ -14,8 +14,8 @@ namespace PcapDotNet.Core
     {
         private readonly IpV6Address _address;
 
-        internal IpV6SocketAddress(IntPtr /* sockaddr* */ address) :
-            base((ushort)SocketAddressFamily.Internet6)
+        internal IpV6SocketAddress(IntPtr /* sockaddr* */ address)
+            : base(SocketAddressFamily.Internet6)
         {
             if (address == IntPtr.Zero)
                 throw new ArgumentNullException(nameof(address));

@@ -9,10 +9,10 @@ namespace PcapDotNet.Core
         private readonly SocketAddressFamily _family;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        protected SocketAddress(ushort family)
+        protected SocketAddress(SocketAddressFamily family)
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         {
-            _family = (SocketAddressFamily)family;
+            _family = family;
         }
 
         /// <summary>

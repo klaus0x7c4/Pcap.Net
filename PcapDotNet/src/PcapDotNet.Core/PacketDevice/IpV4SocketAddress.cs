@@ -10,12 +10,12 @@ namespace PcapDotNet.Core
     /// <summary>
     /// An internet protocol version 4 address for a device.
     /// </summary>
-    public sealed class IpV4SocketAddress  : SocketAddress
+    public sealed class IpV4SocketAddress : SocketAddress
     {
         private readonly IpV4Address _address;
 
-        internal IpV4SocketAddress(IntPtr /* sockaddr* */ address) :
-            base((ushort)SocketAddressFamily.Internet)
+        internal IpV4SocketAddress(IntPtr /* sockaddr* */ address)
+            : base(SocketAddressFamily.Internet)
         {
             if (address == IntPtr.Zero)
                 throw new ArgumentNullException(nameof(address));
@@ -28,7 +28,7 @@ namespace PcapDotNet.Core
         /// The ip version 4 address.
         /// </summary>
         public IpV4Address Address => _address;
-        
+
         /// <inheritdoc/>
         public override string ToString()
         {
