@@ -30,7 +30,7 @@ namespace PcapDotNet.Core
             _packetsDroppedByDriver = (uint)Marshal.ReadInt32(statisticsPtr, 1 * elementSize);
             _packetsDroppedByInterface = (uint)Marshal.ReadInt32(statisticsPtr, 2 * elementSize);
             _packetsCaptured = statisticsSize >= 16
-                        ? (uint)Marshal.ReadInt32(statisticsPtr, 4 * elementSize)
+                        ? (uint)Marshal.ReadInt32(statisticsPtr, 3 * elementSize)
                         : 0;
         }
 
