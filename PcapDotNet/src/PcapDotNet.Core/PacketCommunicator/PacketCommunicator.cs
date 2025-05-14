@@ -98,7 +98,7 @@ namespace PcapDotNet.Core
                 {
                     var results = new List<PcapDataLink>(numDataLinks);
                     for (int i = 0; i != numDataLinks; ++i)
-                        results.Add(new PcapDataLink(Marshal.ReadInt32(dataLinks, i)));
+                        results.Add(new PcapDataLink(Marshal.ReadInt32(dataLinks, i * sizeof(int))));
                     return new ReadOnlyCollection<PcapDataLink>(results);
                 }
                 finally
