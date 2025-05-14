@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../../README.md" />
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+  </Folder>
+  <Project Path="PcapDotNet.Base.Test/PcapDotNet.Base.Test.csproj" />
+  <Project Path="PcapDotNet.Base/PcapDotNet.Base.csproj" />
+  <Project Path="PcapDotNet.Core.Extensions/PcapDotNet.Core.Extensions.csproj" />
+  <Project Path="PcapDotNet.Core.Test/PcapDotNet.Core.Test.csproj" />
+  <Project Path="PcapDotNet.Core/PcapDotNet.Core.csproj" />
+  <Project Path="PcapDotNet.Packets.Test/PcapDotNet.Packets.Test.csproj" />
+  <Project Path="PcapDotNet.Packets.TestUtils/PcapDotNet.Packets.TestUtils.csproj" />
+  <Project Path="PcapDotNet.Packets/PcapDotNet.Packets.csproj" />
+  <Project Path="PcapDotNet.TestUtils/PcapDotNet.TestUtils.csproj" />
+  <Project Path="PcapDotNet/PcapDotNet.csproj">
+    <Build Project="false" />
+  </Project>
+</Solution>
