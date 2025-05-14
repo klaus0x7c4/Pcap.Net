@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -49,26 +49,9 @@ namespace PcapDotNet.Core.Native
             {
                 return IntPtr.Zero;
             }
-            byte[] bytes = null;
-            var byteCount = 0;
-            if (managedObj is string str)
-            {
-                var endcoding = GetEncoding();
-                bytes = endcoding.GetBytes(str);
-                byteCount = bytes.Length + 1;
-            }
-            else if (managedObj is StringBuilder builder)
-            {
-                var endcoding = GetEncoding();
-                bytes = endcoding.GetBytes(builder.ToString());
-                byteCount = endcoding.GetMaxByteCount(builder.Capacity) + 1;
-            }
-
-            if (bytes is null)
-            {
-                throw new ArgumentException("The input argument is not a supported type.");
-            }
-            var ptr = Marshal.AllocHGlobal(byteCount);
+            var str = (string)managedObj;
+            var bytes = GetEncoding().GetBytes(str);
+            var ptr = Marshal.AllocHGlobal(bytes.Length + 1);
             Marshal.Copy(bytes, 0, ptr, bytes.Length);
             // Put zero string termination
             Marshal.WriteByte(ptr + bytes.Length, 0);
