@@ -148,8 +148,8 @@ namespace PcapDotNet.Core.Test
                 var task = Task.Run(delegate ()
                 {
                     result = communicator.ReceivePackets(numPacketsToGet, handler.Handle);
-                });
-                var delay = Task.Delay(TimeSpan.FromSeconds(5));
+                }, TestContext.Current.CancellationToken);
+                var delay = Task.Delay(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
                 await Task.WhenAny(task, delay);
 
                 Assert.True(expectedResult == result, testDescription);

@@ -42,6 +42,7 @@
   <Choose>
     <When Condition=" $(MSBuildProjectName.EndsWith('.Test')) ">
       <PropertyGroup>
+        <OutputType>Exe</OutputType>
         <TargetFrameworks>net48;net8.0</TargetFrameworks>
         <GenerateDocumentationFile>False</GenerateDocumentationFile>
       </PropertyGroup>

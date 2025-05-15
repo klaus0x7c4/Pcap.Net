@@ -193,9 +193,9 @@ namespace PcapDotNet.Core.Test
                     if (numPacketsToBreakLoop == 0)
                         communicator.Break();
                     result = communicator.ReceivePackets(numPacketsToWait, handler.Handle);
-                });
+                }, TestContext.Current.CancellationToken);
 
-                var dealy = Task.Delay(TimeSpan.FromSeconds(secondsToWait));
+                var dealy = Task.Delay(TimeSpan.FromSeconds(secondsToWait), TestContext.Current.CancellationToken);
                 await Task.WhenAny(task, dealy);
                 DateTime finishedWaiting = DateTime.Now;
 
@@ -255,9 +255,9 @@ namespace PcapDotNet.Core.Test
                         if (actualPacketsReceived == numPacketsToBreakLoop)
                             break;
                     }
-                });
+                }, TestContext.Current.CancellationToken);
 
-                var delay = Task.Delay(TimeSpan.FromSeconds(secondsToWait));
+                var delay = Task.Delay(TimeSpan.FromSeconds(secondsToWait), TestContext.Current.CancellationToken);
                 await Task.WhenAny(task, delay);
                 DateTime finishedWaiting = DateTime.Now;
 
@@ -436,9 +436,9 @@ namespace PcapDotNet.Core.Test
                             if (numStatisticsGot >= numStatisticsToBreakLoop)
                                 communicator.Break();
                         });
-                });
+                }, TestContext.Current.CancellationToken);
 
-                var delay = Task.Delay(TimeSpan.FromSeconds(secondsToWait));
+                var delay = Task.Delay(TimeSpan.FromSeconds(secondsToWait), TestContext.Current.CancellationToken);
                 await Task.WhenAny(task, delay);
                 DateTime finishedWaiting = DateTime.Now;
 
@@ -539,7 +539,7 @@ namespace PcapDotNet.Core.Test
                 var task = Task.Run(() =>
                 {
                     communicator.ReceivePackets(1, delegate { });
-                });
+                }, TestContext.Current.CancellationToken);
 
                 await Assert.ThrowsAsync<InvalidOperationException>(() => task);
             }
@@ -682,14 +682,14 @@ namespace PcapDotNet.Core.Test
                     packetsToSend[i + 1] = _random.NextEthernetPacket(60 * (i + 2), sourceMac, destinationMac);
 
                 List<Packet> packets = new List<Packet>(6);
-                var task = Task.Run(() => packets.AddRange(communicator.ReceivePackets(6)));
+                var task = Task.Run(() => packets.AddRange(communicator.ReceivePackets(6)), TestContext.Current.CancellationToken);
 
                 communicator.SendPacket(packetsToSend[0]);
-                await Task.Delay(TimeSpan.FromSeconds(0.7));
+                await Task.Delay(TimeSpan.FromSeconds(0.7), TestContext.Current.CancellationToken);
                 for (int i = 0; i != 10; ++i)
                 {
                     communicator.SendPacket(packetsToSend[i + 1]);
-                    await Task.Delay(TimeSpan.FromSeconds(0.55));
+                    await Task.Delay(TimeSpan.FromSeconds(0.55), TestContext.Current.CancellationToken);
                 }
 
                 await task;
