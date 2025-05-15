@@ -190,9 +190,8 @@ namespace PcapDotNet.Core
 
         /// <summary>
         /// Set the size of the kernel buffer associated with an adapter.
-        /// If an old buffer was already created with a previous call to SetKernelBufferSize(), it is deleted and its content is discarded.
-        /// LivePacketDevice.Open() creates a 1 MByte buffer by default.
-        /// <!--seealso cref="LivePacketDevice::Open"/-->
+        /// If an old buffer was already created with a previous call to <see cref="SetKernelBufferSize"/>, it is deleted and its content is discarded.
+        /// <seealso cref="LivePacketDevice.Open"/> creates a 1 MByte buffer by default.
         /// </summary>
         /// <param name="size">the size of the buffer in bytes</param>
         /// <exception cref="InvalidOperationException">Thrown on failure.</exception>
@@ -229,7 +228,7 @@ namespace PcapDotNet.Core
         /// </summary>
         /// <remarks>
         /// Warning: Sampling parameters cannot be changed when a capture is active. These parameters must be applied before starting the capture. If they are applied when the capture is in progress, the new settings are ignored.
-        /// Warning: Sampling works only when capturing data on Win32 or reading from a file. It has not been implemented on other platforms. Sampling works on remote machines provided that the probe (i.e. the capturing device) is a Win32 workstation. 
+        /// Warning: Sampling works only when capturing data on Win32 or reading from a file. It has not been implemented on other platforms. Sampling works on remote machines provided that the probe (i.e. the capturing device) is a Win32 workstation.
         /// </remarks>
         /// <param name="method">The sampling method to be applied</param>
         public void SetSamplingMethod(SamplingMethod method)

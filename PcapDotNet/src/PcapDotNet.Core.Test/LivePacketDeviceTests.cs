@@ -22,7 +22,7 @@ namespace PcapDotNet.Core.Test
     public class LivePacketDeviceTests
     {
         [Fact]
-        public void SendAndReceievePacketTest()
+        public void SendAndReceivePacketTest()
         {
             const string SourceMac = "11:22:33:44:55:66";
             const string DestinationMac = "77:88:99:AA:BB:CC";
@@ -425,16 +425,17 @@ namespace PcapDotNet.Core.Test
                 DateTime startWaiting = DateTime.Now;
                 var task = Task.Run(delegate
                 {
-                    result = communicator.ReceiveStatistics(numStatisticsToGather,
-                                                     delegate (PacketSampleStatistics statistics)
-                                                     {
-                                                         Assert.NotNull(statistics.ToString());
-                                                         totalPackets += statistics.AcceptedPackets;
-                                                         totalBytes += statistics.AcceptedBytes;
-                                                         ++numStatisticsGot;
-                                                         if (numStatisticsGot >= numStatisticsToBreakLoop)
-                                                             communicator.Break();
-                                                     });
+                    result = communicator.ReceiveStatistics(
+                        numStatisticsToGather,
+                        delegate (PacketSampleStatistics statistics)
+                        {
+                            Assert.NotNull(statistics.ToString());
+                            totalPackets += statistics.AcceptedPackets;
+                            totalBytes += statistics.AcceptedBytes;
+                            ++numStatisticsGot;
+                            if (numStatisticsGot >= numStatisticsToBreakLoop)
+                                communicator.Break();
+                        });
                 });
 
                 var delay = Task.Delay(TimeSpan.FromSeconds(secondsToWait));
@@ -792,7 +793,7 @@ namespace PcapDotNet.Core.Test
             PacketCommunicator communicator = device.Open(snapshotLength, PacketDeviceOpenAttributes.Promiscuous, 1000);
             try
             {
-                //MoreAssert.AreSequenceEqual(new[] {DataLinkKind.Ethernet, DataLinkKind.Docsis}.Select(kind => new PcapDataLink(kind)), communicator.SupportedDataLinks);
+                Assert.Equal(new[] { DataLinkKind.Ethernet, DataLinkKind.Docsis }.Select(kind => new PcapDataLink(kind)), communicator.SupportedDataLinks);
                 PacketTotalStatistics totalStatistics = communicator.TotalStatistics;
                 Assert.Equal<object>(totalStatistics, totalStatistics);
                 Assert.NotNull(totalStatistics);
@@ -801,9 +802,9 @@ namespace PcapDotNet.Core.Test
                 Assert.False(totalStatistics.Equals(null));
                 Assert.NotNull(totalStatistics);
                 //MoreAssert.IsSmallerOrEqual<uint>(1, totalStatistics.PacketsCaptured, "PacketsCaptured");
-                //Assert.Equal<uint>(0, totalStatistics.PacketsDroppedByDriver);
-                //Assert.Equal<uint>(0, totalStatistics.PacketsDroppedByInterface);
                 //MoreAssert.IsSmallerOrEqual<uint>(1, totalStatistics.PacketsReceived);
+                Assert.Equal<uint>(0, totalStatistics.PacketsDroppedByDriver);
+                Assert.Equal<uint>(0, totalStatistics.PacketsDroppedByInterface);
                 Assert.NotNull(totalStatistics.ToString());
                 communicator.SetKernelBufferSize(2 * 1024 * 1024); // 2 MB instead of 1
                 communicator.SetKernelMinimumBytesToCopy(10); // 10 bytes minimum to copy
